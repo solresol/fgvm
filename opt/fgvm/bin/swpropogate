@@ -1,0 +1,32 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+@all_partitions = &FGVM_PARTITIONS();
+chdir("/");
+
+foreach $swpackage  (@ARGV) {
+  foreach $partition (@all_partitions) {
+    print "    [ $partition ]\n";
+    open(CPIO,"|cpio -pxdmv $FGVM_ROOTS/$partition/ 2> /dev/null")
+         || die "couldn't start cpio";
+    open(SWLIST_OUTPUT,"swlist -l file $swpackage|") || die "Could't run swlist -l file $swpackage, $!, stopped";
+    updated_file:
+     while (<SWLIST_OUTPUT>) {
+       next updated_file if /^#/;
+       next updated_file if /^\s*$/;
+       s:[^/]*/::;  # strip off beginnings
+       s:\s*$:\n:;    # strip off trailing whitespace
+       print CPIO $_;
+    }
+    close(CPIO);
+    close(SWLIST_OUTPUT);
+    print "\n";
+    $ipd_directory = $swpackage;
+    $ipd_directory =~ s:\.:/:g;
+         # subpackages are separated by dots, and stored in
+         # directory heirarchy in the installed products db
+    system("$FGVM_BIN_DIR/propogate /var/adm/sw/products/$ipd_directory");
+ }
+}
+
+

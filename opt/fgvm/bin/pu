@@ -1,0 +1,21 @@
+#!/usr/contrib/bin/perl
+
+# pu:  analogous to su.
+# It chroots you into a partition'ed environment
+
+require '/etc/opt/fgvm/environ.pl';
+if (! & FGVM_PARTITION_EXISTS($ARGV[0]) ) {
+  print STDERR "No such partition as $ARGV[0]\n";
+  exit(1);
+}
+chroot ($FGVM_ROOTS . "/" . $ARGV[0]);
+chdir("/");
+
+if ($#ARGV == 0) {
+ $shell = '/usr/bin/ksh';
+ exec $shell '-ksh','-i';
+}
+
+exec @ARGV[1..$#ARGV];
+
+

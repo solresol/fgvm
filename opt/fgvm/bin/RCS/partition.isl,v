@@ -1,0 +1,74 @@
+head     1.2;
+access   ;
+symbols  ;
+locks    root:1.2; strict;
+comment  @@;
+
+
+1.2
+date     99.05.07.15.28.13;  author root;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     99.05.07.10.33.12;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Like the ISL for HPUX,  this is the initial loader
+for a partition.  It mounts all filesystems and runs init.
+@
+
+
+1.2
+log
+@Added fsck
+@
+text
+@#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+ALL_PARTITIONS=$(cat $FGVM_PARTITION_LIST)
+
+if [ $# -eq 0 ]
+then
+   echo "Starting all partitions"
+   for p in $ALL_PARTITIONS
+   do
+      echo "Starting $p"
+      $0 $p
+   done
+else
+   PARTITION_NAME=$1
+   echo "Checking root filesystem"
+   fsck /dev/vg${PARTITION_NAME}partition/rroot
+   echo "Mounting root filesystem of $PARTITION_NAME"
+   mount /dev/vg${PARTITION_NAME}partition/root ${FGVM_ROOTS}/${PARTITION_NAME}
+   echo "Mounting filesystems of $PARTITION_NAME"
+   $FGVM_ISL_DIR/mountall.pl $PARTITION_NAME
+   if [ "$DONT_FIX_PARTITIONED_PRINTERS" != ""  ]
+   then
+     echo "Fixing printers into $PARTITION_NAME"
+     $FGVM_BIN_DIR/printer-setup.pl $PARTITION_NAME
+   fi
+   if [ "$DONT_FIX_PARTITION_DEVICES" != "" ]
+   then
+     echo "Thinking about updating device files in $PARTITION_NAME"
+     $FGVM_BIN_DIR/update-devices.sh $PARTITION_NAME
+   fi
+   echo "Running /sbin/init.partition of $PARTITION_NAME"
+   chroot $FGVM_ROOTS/${PARTITION_NAME} /sbin/init.partition
+fi
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d17 2
+@

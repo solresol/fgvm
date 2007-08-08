@@ -1,0 +1,41 @@
+#!/sbin/sh
+
+PATH=/usr/sbin:/usr/bin:/sbin:/usr/contrib/bin
+
+echo "Stopping spooler"
+/usr/sbin/lpshut
+
+echo "Stopping networking"
+netstop.partition
+
+echo "Stopping cron:  ignore partition errors"
+/sbin/kill `ps -ef | grep cron | grep -v grep | cut -c10-15`
+
+echo "Stopping SVR4 packages."
+. /etc/partition/packages
+
+for package in $PARTITION_SAFE_PACKAGES
+do
+  if [ -f /sbin/init.d/$package ] 
+  then
+     /sbin/init.d/$package stop_msg
+     /sbin/init.d/$package stop
+     X=$?
+     case $X in
+       0)  ;;
+       1) echo "...Package stop failed!" ;;
+       2) echo "...Package not configured to stop";;
+       3) echo "...Package requested reboot. Ignored.";;
+    esac
+  fi
+done
+
+echo "Killing every other process"
+/sbin/kill $(ps -ef | grep -v reboot | cut -c10-15) 2> /dev/null
+
+echo "Sleeping 5"
+sleep 5
+
+echo "Killing -9 every other process"
+/sbin/kill -9 $(ps -ef | grep -v reboot | cut -c10-15) 2> /dev/null
+

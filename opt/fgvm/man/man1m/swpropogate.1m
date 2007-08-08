@@ -1,0 +1,60 @@
+.TA p
+.TH swpropogate 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+swpropogate \- update partitions from the toplevel
+.SH SYNOPSIS
+.CR swpropogate
+.IR [ patch | bundle | product | fileset ]
+.RC ...
+.SH DESCRIPTION
+.CR swpropogate
+copies the  software distributor objects (including
+the installed products database) 
+given as arguments
+into all partitions.
+.PP
+As far as I know,  there's no way of getting swagentd(1m)
+to run in a chroot'ed environment, so to install new sofware
+or patches you would do normally install them at the top
+level,  and then (possibly after the compulsory reboot for
+kernel patches) swpropogate them.
+.PP
+There is no problem with running swpropogate multiple times.
+.PP
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must be a Perl4-compatible interpreter.
+.PP
+.SH BUGS
+There is no swunpropogate for removing a package that has been
+removed from the toplevel.  swlist(1m) might think
+that some filesets were not configured.
+.PP
+A patch that modified one of the FGVM modified commands (such as
+ps or kill) will still get copied intact,  thus stuffing up the
+sub environment.  
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.TP
+.CR /var/spool/sw/products
+the install products database
+.TD
+.PP
+.SH SEE ALSO
+swinstall(1m),
+swlist(1m),
+pcp(1m),
+propogate(1m),
+pu(1m),
+pshow(1m),
+pls(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

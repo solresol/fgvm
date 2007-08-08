@@ -1,0 +1,61 @@
+.TA p
+.TH partition.isl 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+partition.isl \- partition final system unloader
+.SH SYNOPSIS
+.CR partition.isl
+.IR \[ partition \]
+.RC ...
+.SH DESCRIPTION
+.CR partition.isl
+starts a partition. If given no arguments,  it attempt to start all
+partitions.
+.PP
+It mounts the partition's root filesystem (performing
+fsck(1m) if necessary), and
+then its non-root filesystems (as listed in the partition's /etc/fstab
+file).  Device files are copied in from the top level by pdevupdate(1m)
+and the printer configuration "corrected" with plpsetup(1m).   Finally,
+the partition's init.partition program is run
+.PP
+Because of bugs in HP's implementation of mount(1m), mountall(1m), umount(1m)
+and umountall(1m),  even "non-root" filesystems need to mounted outside
+of the chroot'ed environment.  Therefore, there is a program mountall.pl(1m)
+to perform this task.  This may change in the future, when it becomes 
+possible to use mountall(1m) within the chroot'ed environment.
+.PP
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+mountall.pl requires /usr/contrib/bin/perl.
+.SH FEATURES
+It is not a problem to run partition.isl twice on the same partition.
+.PP
+.SH FILES
+.PD 0
+.TP 35
+.CR /sbin/init.partition
+in each partition
+.TP
+.CR /etc/fstab
+in each partition
+.TP
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/environ.pl
+ditto
+.TP
+.CR /opt/fgvm/isl/mountall.pl
+the HP bug workaround
+.PD
+.SH SEE ALSO
+partition.fsu(1m),
+pls(1m),
+pshow(1m),
+pps(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

@@ -1,0 +1,88 @@
+                     Fgvm README
+		     ===========
+
+ (Franklins' and Gregs' VM / ForeGround Virtual Machine )
+
+What is it?
+-----------
+
+Fgvm is a mechanism for partitioning a Unix system into multiple semi-
+independant systems.  It is based around Unix's chroot() system call,
+which causes a process to be trapped into a small "corner" of the
+filesystem,  which can be constructed to look like a full system, if
+desired,  or a stripped down system (such as one gets for anonymous
+ftp).
+
+Fgvm consists of:  
+ - some small programs for copying a "toplevel" into a new volume
+ group 
+ - some init scripts which mount filesystems and alias IP addresses and
+ start up some daemons
+ - some utilities for monitoring the status of partitions
+ - some utilities for system admin on those partitions.
+
+
+
+What is it not?
+---------------
+
+It is not a mechanism for running multiple different operating systems
+on the one machine like VMware or IBM VM.  
+
+
+
+What platforms does it run on?
+------------------------------
+
+Currently,  only HP-UX 11.0 64-bit.  It should be just a matter of
+a couple of recompiles to get it working on HP-UX 11.0 32-bit,  and
+I don't envisage any trouble getting it going on HP-UX 10.X.  
+
+Only a few things are HP-specific though.  First is the mechanism
+used for determining what a processes' root directory is.  HP has
+a pstat_getproc system call which is used for this purpose.  Systems
+that have a /proc filesystem would be totally different,  but they
+would be pretty straightforward to get working.
+
+The other is that in the initial setup,  there is some code that
+creates extra partitions.  This uses LVM logical volumes at the moment.
+This would be pretty easy to translate to (say) Tru64 or AIX, but
+a bit more problematic for (say) FreeBSD.  Still,  it's not fundamental,
+so it can probably be worked around.
+
+Any ideas, or patches to port to another OS would be greatly appreciated.
+
+
+
+Status
+------
+
+It's pretty buggy.  Quite a few things don't work,  such as bdf (some
+sort of HP bug);  usermod, useradd and userdel have issues;  software
+distributor software can't be uninstalled; still some flakiness in
+some scripts.
+
+Having said that,  it has worked successfully as a test and development
+environment running Oracle and Remedy for several months.
+
+History
+-------
+
+Fgvm began as an attempt by Franklins to save buying some more computers.
+They had a fairly powerful HP-UX machine which they wanted to partition
+up into multiple "virtual machines",  like VM does for IBM S/390.  Craig
+employed Greg for a week to work on it.  As usual,  the project went
+overtime (by 2 days),  and was completed in May 1999.  In July 1999 it
+was released under GPL.
+
+
+Credits
+-------
+
+Greg Baker (greg.baker@aptec.net.au) - wrote most of the code
+Craig Ratcliffe (ratcliffec@franklins.com.au) - who found the funds
+Dan Huang (huangd@franklins.com.au) - found several bugs
+Navin Jain (jainn@franklins.com.au) - who had to administer it in real life
+Franklins - for having an enlightened attitude towards in-house software
+            development,  particularly for a large product such as this.
+

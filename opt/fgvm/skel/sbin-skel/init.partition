@@ -1,0 +1,40 @@
+#!/sbin/sh
+
+PATH=/sbin:/usr/bin:/usr/sbin:/usr/contrib/bin
+
+# mount filesystems within this partition
+#mount -a
+# because of a bug in HPUX 11/64,  this mount can't
+# run from inside the chroot'ed environment.  As a result
+# it has already been handled from 'outside'.
+
+echo "Identifying my partition identifier"
+partition_of > /etc/partition/root_id
+
+#echo "Starting up print spooler"
+#lpsched
+echo "Starting networking"
+netstart.partition
+#echo "Starting cron"
+#cron
+
+
+echo "Starting SVR4 packages."
+. /etc/partition/packages
+
+for package in $PARTITION_SAFE_PACKAGES
+do
+  if [ -f /sbin/init.d/$package ] 
+  then
+     /sbin/init.d/$package start_msg
+     /sbin/init.d/$package start
+     X=$?
+     case $X in
+       0)  ;;
+       1) echo "...Package start failed!" ;;
+       2) echo "...Package not configured to start";;
+       3) echo "...Package requested reboot. Ignored.";;
+    esac
+  fi
+done
+

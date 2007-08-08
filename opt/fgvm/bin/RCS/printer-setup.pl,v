@@ -1,0 +1,57 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    root:1.1; strict;
+comment  @@;
+
+
+1.1
+date     99.05.07.10.27.35;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Removes all printers within a partition with the
+same name as a toplevel one,  and replaces it by
+a remote printer,  remote to toplevel localhost.
+@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/contrib/bin/perl
+
+$rcsid = '$Id$';
+
+require '/etc/opt/fgvm/environ.pl';
+
+sub do_chrooted {
+  local ($where,@@command) = @@_;
+  return system("chroot","$FGVM_ROOTS/$where",@@command);
+}
+
+foreach $PARTITION (@@ARGV) {
+  chdir '/etc/lp/interface';
+  @@printers = split(/\s+/,`/usr/bin/ls`);
+  #print "Here are the printers that I should be working on @@printers\n";
+
+  print "Shutting down $PARTITION lpspooler\n";
+  &do_chrooted($PARTITION,"/usr/sbin/lpshut");
+  foreach $printer (@@printers) {
+     print "In $PARTITION,  deleting printer $printer\n";
+     &do_chrooted($PARTITION,"/usr/sbin/lpadmin","-x$printer");
+     print "In $PARTITION,  creating printer $printer as a remote printer to localhost\n";
+     &do_chrooted($PARTITION,"/usr/sbin/lpadmin","-p$printer","-v/dev/null","-mrmodel","-ocmrcmodel","-osmrsmodel","-ormlocalhost","-orp$printer"); 
+     &do_chrooted($PARTITION,"/usr/sbin/accept",$printer);
+     &do_chrooted($PARTITION,"/usr/bin/enable",$printer);
+  }
+  print "Restarting $PARTITION lpspooler\n";
+  &do_chrooted($PARTITION,"/usr/sbin/lpsched");
+}
+
+@

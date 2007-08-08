@@ -1,0 +1,24 @@
+.TA p
+.TH pls 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+partitionname \- print name of current partition
+.SH SYNOPSIS
+.CR /sbin/partitionname
+.SH DESCRIPTION
+.CR partitionname
+is only available in the chroot'ed environments (sensibly enough).
+It displays the contents of /etc/partitionname,  which is set
+up by create-partition(1m) from the toplevel to include the correct name.
+.PP
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/partitionname
+name of partition
+.PP
+.SH SEE ALSO
+create-partition(1m)
+.SH STANDARDS COMPLIANCE
+None whatsoever

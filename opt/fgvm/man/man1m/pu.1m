@@ -1,0 +1,45 @@
+.TA p
+.TH pu 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pu \- switch partitions
+.SH SYNOPSIS
+.CR pu
+.IR partition
+.HP
+.CR pu
+.IR partition
+.RC cmd
+.RC args 
+.RC ...
+.SH DESCRIPTION
+.CR pu
+is a little like su.  Given one argument,  it does a chroot(2)
+into the partition given and starts a shell there.  Given more
+arguments it asssumes that the remainder are arguments, and 
+runs them.
+.PP
+.SH WARNINGS
+Unknown partition .... 
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must be a Perl4-compatible interpreter.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.PP
+.SH SEE ALSO
+chroot(1m),
+chroot(2),
+create-partition(1m),
+pcp(1m),
+propogate(1m),
+swpropogate(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

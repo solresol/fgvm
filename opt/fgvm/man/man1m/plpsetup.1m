@@ -1,0 +1,65 @@
+.TA p
+.TH plpsetup 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+plpsetup \- update printer configuration in a partition
+.SH SYNOPSIS
+.CR plpsetup
+.IR \[ partition \]
+.RC ...
+.SH DESCRIPTION
+Because it is necessary to serialise access to printers,  it
+is not safe to have multiple lpsched(1m) processes acting on
+the one system all writing to the same devices at the same time,
+FGVM employs a workaround.  The toplevel is left unchanged,  and
+all the subpartitions are modified so that their printer definitions
+are all "remote" (SVR4) printers,  printing "remotely" to the
+toplevel.
+.PP
+.CR plpsetup
+does this modification.  Firstly it removes any printer in the
+given subpartition with the same name as one in the toplevel,  and
+the creates a remote equivalent.   
+.PP
+If given arguments,  these are taken to be the names of partitions
+to work on.  If given no arguments,  it will work through all
+partitions in turn.  It automatically runs lpshut(1m) and lpsched(1m)
+in each partition as it works.
+.PP
+It is run automatically by partition.isl(1m).  
+.SH FEATURES
+.CR plpsetup
+does not remove printers in a subpartition that directly access
+device files if the name does not match a toplevel printer
+name.  This is because there (should be) no danger of race
+conditions between multiple lpsched processes.
+.SH BUGS
+.CR plpsetup
+will always add a toplevel printer,  even if it did not previously
+exist in the subenvironment.
+.PP
+If spool files existed in the toplevel when create-partition(1m)
+was run,  these will probably continue to exist in the partition.
+Moreover,  these may get printed twice, or worse still,  may not
+be printable,  thus causing the printer removal done by
+.CR plpsetup
+to fail.
+.PP
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+lpsched(1m),
+lpshut(1m),
+lpadmin(1m),
+create-partition(1m),
+pls(1m),
+partition.isl(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

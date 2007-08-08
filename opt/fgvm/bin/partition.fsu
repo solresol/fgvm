@@ -1,0 +1,29 @@
+#!/usr/bin/ksh
+# $Id$
+# partition.fsu  --- final system unloader
+. /etc/opt/fgvm/environ.sh
+
+ALL_PARTITIONS=$(cat $FGVM_PARTITION_LIST)
+
+if [ $# -eq 0 ]
+then
+   echo "Stopping all partitions"
+   for p in $ALL_PARTITIONS
+   do
+      echo "Stopping $p"
+      $0 $p
+   done
+else
+   while [ "$*" != "" ]
+   do
+     PARTITION_NAME=$1
+     echo "Executing reboot to single user mode in $PARTITION_NAME ($1)"
+     chroot $FGVM_ROOTS/${PARTITION_NAME} /sbin/reboot.partition
+     echo "Unmounting non-root filesystems"
+     $FGVM_FSU_DIR/umountall.pl $PARTITION_NAME
+     echo "Unmounting root filesystem of $PARTITION_NAME"
+     umount /dev/vg${PARTITION_NAME}partition/root
+     shift
+   done
+fi
+

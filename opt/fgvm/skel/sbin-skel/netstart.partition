@@ -1,0 +1,29 @@
+#!/sbin/sh
+
+if [ -f /etc/partition/netconf ]
+then
+   . /etc/partition/netconf
+else
+   echo "/etc/partition/netconf missing.  Will not start partition-specific networking"
+   exit 2
+fi
+
+# netconf should look like this:
+#
+# INTERFACE_NAME="lan1:3"
+# IP_ADDRESS="10.12.5.199"
+# NETMASK="255.255.255.0"
+#
+# there is currently no support for more than one IP address in a partition
+# nor is there anything really clever with MC/ServiceGuard.
+
+if [ "X$INTERFACE_NAME" = "X" -o  "X$IP_ADDRESS" = "X" -o "X$NETMASK" = "X" ]
+then 
+   echo "INTERFACE_NAME, IP_ADDRESS and NETMASK are not all defined."
+   echo "Will not start partition-specific networking."
+   exit 2
+fi
+
+ifconfig $INTERFACE_NAME $IP_ADDRESS up netmask $NETMASK
+exit $?
+

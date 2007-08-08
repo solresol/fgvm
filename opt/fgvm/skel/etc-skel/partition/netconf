@@ -1,0 +1,14 @@
+# netconf 
+# 
+# This file gets sourced by /sbin/netstart.partition
+# when it wants to create a unique IP address for this
+# partition.
+# 
+# There are three variables:
+#
+# INTERFACE_NAME="lan1:3"    # a unique interface alias
+# IP_ADDRESS="10.12.5.199"   # some unique ip address 
+# NETMASK="255.255.255.0"    # the netmask associated with this
+#
+# there is currently no support for more than one IP address in a partition
+# nor is there anything really clever with MC/ServiceGuard.

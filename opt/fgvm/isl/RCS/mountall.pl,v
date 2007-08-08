@@ -1,0 +1,65 @@
+head     1.2;
+access   ;
+symbols  ;
+locks    root:1.2; strict;
+comment  @@;
+
+
+1.2
+date     99.05.07.15.28.25;  author root;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     99.05.07.10.17.35;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@As part of initial system loading,  all filesystems within
+a partition (except for the root one) need to be mounted.
+(This should of course be done by the partition's init program,
+but HP-UX's mount in stuffed up in a chroot'ed environment.
+@
+
+
+1.2
+log
+@Added fsck step
+@
+text
+@#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+foreach $PARTITION_NAME (@@ARGV) {
+  $fstab = "$FGVM_ROOTS/$PARTITION_NAME/etc/fstab";
+  open(FSTAB,$fstab) || die "Can't open $fstab.  Stopped ";
+fs:
+  while  (<FSTAB>) {
+ 	next fs if /^#/;
+	next fs if /^\s*$/;
+	($device,$mountpoint,$fstype,$options,$backupnum,$fsck_num) = split;
+	next if $mountpoint =~ m:^/$:;
+        @@splitdevice = split('/',$device);
+        $splitdevice[$#splitdevice] = 'r' . $splitdevice[$#splitdevice];
+        $rawdevice = join('/',@@splitdevice);
+        print "fsk $rawdevice\n";
+        system("fsck $rawdevice");
+	$mountpoint = "$FGVM_ROOTS/$PARTITION_NAME" . $mountpoint;
+	$cmd = "mount -F $fstype -o $options $device $mountpoint";
+	print "Running $cmd\n";
+	system("$cmd");
+   }
+}
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d14 5
+@

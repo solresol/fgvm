@@ -1,0 +1,27 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+$destination = $ARGV[$#ARGV];
+@files = @ARGV[0..$#ARGV-1];
+
+
+#  Three possibilities...
+#  pcp  files .... partition:
+#  pcp  files .... partition:/directory
+#  pcp  file partition:/file/name
+
+$partition_name = $destination;
+$partition_name =~ s/:.*//;
+if (! &FGVM_PARTITION_EXISTS($partition_name)) {
+  print STDERR "Unknown partition $partition_name\n";
+  exit(1);
+}
+
+# now let's work out what directory...
+$directory = $destination;
+$directory =~ s![^:]*:!$FGVM_ROOTS/$partition_name! ;
+
+$cmd = "cp " . join(' ' ,@files) . " $directory";
+print "$cmd\n";
+exec $cmd;

@@ -1,0 +1,17 @@
+#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+PARTITIONS=$*
+if [ "$PARTITIONS" = "" ]
+then
+    PARTITIONS=$(cat /etc/opt/fgvm/partition.list)
+fi
+
+for PARTITION in $PARTITIONS
+do
+  cd /dev
+  echo "Creating devices in $PARTITION"
+  find . -xdev -depth -print | cpio -pxdmv $FGVM_ROOTS/$PARTITION/dev 2> /dev/null
+done
+

@@ -1,0 +1,85 @@
+head     1.3;
+access   ;
+symbols  ;
+locks    root:1.3; strict;
+comment  @# @;
+
+
+1.3
+date     99.05.07.16.44.35;  author root;  state Exp;
+branches ;
+next     1.2;
+
+1.2
+date     99.05.07.10.12.28;  author root;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     99.05.07.10.11.16;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Configures ssh to run in a partitioned environment
+@
+
+
+1.3
+log
+@Fixed up mv so that the permissions on the moved file will be
+the same as the one it replaces.
+@
+text
+@#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+PARTITION_NAMES=$*
+
+for PARTITION in $PARTITION_NAMES
+do
+  PARTITION_ROOT=${FGVM_ROOTS}/${PARTITION}
+  if [ -f ${PARTITION_ROOT}/etc/partition/netconf ]
+  then
+   .  ${PARTITION_ROOT}/etc/partition/netconf 
+    
+   if [ "$INTERFACE_NAME" != "" -a "$IP_ADDRESS" != "" -a "$NETMASK" != "" ]
+   then 
+    SSHD_CONFIG=${PARTITION_ROOT}/etc/sshd_config
+    cp -p $SSHD_CONFIG /tmp/sshd_config.${PARTITION}
+    sed 's/^ListenAddress.*$/ListenAddress '"$IP_ADDRESS"/ ${SSHD_CONFIG} > /tmp/sshd_config.${PARTITION}
+    mv /tmp/sshd_config.${PARTITION} ${PARTITION_ROOT}/etc/sshd_config
+   else
+    echo "INTERFACE_NAME, IP_ADDRESS and NETMASK are not all defined."
+    echo "Will not configure ssh on this partition ($PARTITION)"
+   fi
+
+  else
+   echo "Partition $PARTITION does not have /etc/partition/netconf"
+ fi
+done
+@
+
+
+1.2
+log
+@environ is now environ.sh
+@
+text
+@d16 3
+a18 1
+    sed 's/^ListenAddress.*$/ListenAddress '"$IP_ADDRESS"/ ${PARTITION_ROOT}/etc/sshd_config > /tmp/sshd_config.${PARTITION}
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d3 1
+a3 1
+. /etc/opt/fgvm/environ
+@

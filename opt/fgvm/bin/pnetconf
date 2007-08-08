@@ -1,0 +1,11 @@
+#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+for PARTITION in $(cat /etc/opt/fgvm/partition.list)
+do
+  echo "[ $PARTITION ]"
+  grep -v '^#' $FGVM_ROOTS/$PARTITION/etc/partition/netconf
+  echo
+done
+

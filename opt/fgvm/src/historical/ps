@@ -1,0 +1,38 @@
+#!/sbin/perl
+
+open(PS,"/usr/lbin/global-ps @ARGV|") || die "ps - couldn't run the backend ps - $!";
+
+$PARTITION_OF_BINARY="/sbin/partition_of";
+$LOCATION_OF_ID="/etc/partition/root_id";
+
+$my_root_id = `cat $LOCATION_OF_ID`;
+sub is_in_my_partition {
+  local($arg)= @_;
+  local($x);
+  $x = `$PARTITION_OF_BINARY $arg 2> /dev/null`;
+  return ($x eq $my_root_id) ;
+}
+   
+$line1 = <PS>;
+$pid_start_column = index($line1,'PID')-2;
+$pid_column_width =6;
+
+print $line1;
+@lines=(); 
+@pids=();
+while (<PS>) {
+   $pid = (substr($_,$pid_start_column,$pid_column_width));
+   @pids = (@pids,$pid);
+   @lines =(@lines,$_);
+}
+
+open(PARTITIONS,"$PARTITION_OF_BINARY ".join(' ',@pids).'|')
+  || die "Couldn't run $PARTITION_OF_BINARY";
+$linenum = 0;
+while (<PARTITIONS>) {
+  if ($my_root_id eq $_) {
+     print $lines[$linenum];
+  }
+  $linenum++;
+}
+

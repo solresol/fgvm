@@ -1,0 +1,30 @@
+.TA p
+.TH pls 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pls \- list all partitions
+.SH SYNOPSIS
+.CR pls
+.SH DESCRIPTION
+.CR pls
+lists the contents of FGVM's known partition list.  This shows
+all the partitions that have been created and not yet deleted.
+.PP
+If you want to see which partitions are up or down,  you want
+pshow(1m).
+.PP
+.SH BUGS
+Probably none.  I think I got this one pretty much right.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.sh
+locations of configuration files
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+pshow(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

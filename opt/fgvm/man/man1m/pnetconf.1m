@@ -1,0 +1,41 @@
+.TA p
+.TH pnetconf 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pnetconf \- print netconf file of partitions
+.SH SYNOPSIS
+.CR pnetconf
+.IR \[ partition \] 
+.RC ...
+.SH DESCRIPTION
+.CR pnetconf
+lists the contents of the given partition's /etc/partition/netconf
+file,  or all partition's netconf files if no arguments are given.
+This is convenient when you are setting up networking for the 
+first time in a large number of partitions,  and you want to see
+what you have and haven't done.
+.PP
+If you want to know whether the partition's networking is up or not,
+you probably want 
+.C "netstat -i"
+in which there should be an aliased interface for a partition's IP
+address.
+.PP
+.SH BUGS
+Probably none.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.sh
+locations of configuration files
+.TP
+.CR /etc/partition/netconf
+in each partition
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+pshow(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

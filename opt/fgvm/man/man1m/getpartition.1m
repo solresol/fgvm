@@ -1,0 +1,58 @@
+.TA p
+.TH getpartition 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+getpartition \- state partition of processes
+.SH SYNOPSIS
+.CR getpartition
+.RC pid
+.RC ...
+.SH DESCRIPTION
+.CR getpartition
+takes any number of process ids as arguments.  For each pid,
+it will print out which partition it is in,  or "toplevel"
+if it is not in any particular one.
+.PP
+For example,
+.CR getpartition
+.CR 1 
+.CR 5013
+.CR 6112
+might print out:
+.IR
+  1 is in partition toplevel
+.IR
+  5013 is in partition development
+.IR
+  6112 is in partition testing
+.PP
+It does this by running partition_of(1m) against its arguments,
+and checking the result against each partition's /etc/partition/root_id.
+.PP
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+.SH BUGS
+Probably many.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/partition/root_id
+in each partition
+.TP
+.CR /opt/fgvm/lbin/partition_of
+in the top level
+.TP
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+create-partition(1m),
+pshow(1m),
+pps(1m),
+partition_of(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

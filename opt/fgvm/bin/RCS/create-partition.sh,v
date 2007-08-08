@@ -1,0 +1,472 @@
+head     1.7;
+access   ;
+symbols  ;
+locks    root:1.7; strict;
+comment  @@;
+
+
+1.7
+date     99.05.07.11.41.38;  author root;  state Exp;
+branches ;
+next     1.6;
+
+1.6
+date     99.05.06.14.11.17;  author root;  state Exp;
+branches ;
+next     1.5;
+
+1.5
+date     99.05.05.13.47.02;  author root;  state Exp;
+branches ;
+next     1.4;
+
+1.4
+date     99.05.05.11.46.10;  author root;  state Exp;
+branches ;
+next     1.3;
+
+1.3
+date     99.05.04.16.53.29;  author root;  state Exp;
+branches ;
+next     1.2;
+
+1.2
+date     99.05.04.16.51.53;  author root;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     99.05.04.16.50.59;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@This is the program that creates a virtual environment by copying
+the root environment and setting up a few useful files.
+@
+
+
+1.7
+log
+@Changed to use parameterised directories, and
+new filesystem layout.
+@
+text
+@#!/usr/bin/ksh -x
+
+PARTITION_NAMES_LIST="$*"
+
+TELNET_PORT_START_AT=7023
+TELNET_PORT_ADDITION=1000
+
+ROOT_VOLUME_GROUP="/dev/vg00"
+#ROOT_VOLUME_GROUP="/dev/vgroot"
+
+THIS_IS_THE_FIRST_VM=0
+#THIS_IS_THE_FIRST_VM=1
+
+FILESYSTEM_TYPE=vxfs
+FILESYSTEM_MOUNT_OPTIONS="delaylog"
+
+. /etc/opt/fgvm/environ.sh
+
+mkdir -p $FGVM_ROOTS
+cd $FGVM_ROOTS
+
+# start at 7023 and work our way up by 1000, making sure there is no
+# service already listed.  (e.g. from a previous invocation of this program)
+# This might have become obsolete since we are switching to an architecture
+# of an aliased IP address per partition.
+while grep -q $TELNET_PORT_START_AT /etc/services
+do
+  let TELNET_PORT_START_AT=TELNET_PORT_START_AT+TELNET_PORT_ADDITION
+done  
+
+
+#################### mkVolume function ####################
+
+function mkVolume {
+    partition_name=$1
+    size=$2
+    mount_point=$3
+    lvol_name=$4
+    if lvcreate -n $lvol_name -L $size /dev/vg${partition_name}partition
+    then
+        newfs -F $FILESYSTEM_TYPE /dev/vg${partition_name}partition/r${lvol_name}
+        mount -F $FILESYSTEM_TYPE /dev/vg${partition_name}partition/${lvol_name} $FGVM_ROOTS/${partition_name}${mount_point}
+        p=`pwd`
+        cd ${mount_point}
+        echo "Copying files into $FGVM_ROOTS/${partition_name}${mount_point}"
+        find . -xdev -depth -print | cpio -pxdmv $FGVM_ROOTS/${partition_name}${mount_point} > /dev/null
+        if [ "${mount_point}" = "/" ] 
+        then
+         echo "# This is a fake /etc/fstab for this partition" > $FGVM_ROOTS/${partition_name}/etc/fstab
+        fi
+        echo "/dev/vg${partition_name}partition/${lvol_name} ${mount_point} $FILESYSTEM_TYPE $FILESYSTEM_MOUNT_OPTIONS 0 2" >> /$FGVM_ROOTS/${partition_name}/etc/fstab
+        cd $p
+    else
+        echo "Could not create /dev/vg${partition_name}partition/$lvol_name of $size Mb"
+	exit 1
+    fi
+}
+
+######################################################################
+
+function root_logical_volumes {
+    vgdisplay -v $ROOT_VOLUME_GROUP | grep 'LV Name' | sed 's/ *LV Name *//'
+}
+
+function root_filesystem_device {
+    devnm / | cut -f1 -d' '
+}
+
+function filesystem_of_lvol {
+    mount | grep $1 | cut -f1 -d' '
+}
+
+function make_a_sensible_lvol_name {
+    NAME=$(echo $1 | sed 's:^/::' | sed 's:/:.:')
+    if [ "$NAME" = "" ]
+    then
+        NAME="root"
+    fi
+    echo $NAME
+}
+
+function lvol_size {
+    lvdisplay $1 | grep 'LV Size' | cut -c29-
+}
+
+################# COPY FILESYSTEM INTO PARTITION ################
+
+
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do
+    # Do we have appropriate volume group?
+    if ${FGVM_BIN_DIR}create-volume-group.pl /dev/vg${PARTITION_NAME}partition
+    then
+      echo /dev/vg${PARTITION_NAME}partition exists
+    else
+      exit 1
+    fi
+    mkdir -p ${FGVM_ROOTS}/${PARTITION_NAME}
+    have_done_root_filesystem=0
+    for device in $(root_filesystem_device) $(root_logical_volumes)
+    do
+        fs=$(filesystem_of_lvol $device)
+        if [ "$fs" != "" ]
+        then
+            if [ "$fs" = "/" -a "$have_done_root_filesystem" -eq 1 ]
+            then
+                echo "There is no need to do the root filesystem again "
+            else
+                lvol_name=$(make_a_sensible_lvol_name $fs)
+                size=$(lvol_size $device)
+                mkVolume ${PARTITION_NAME} $size $fs $lvol_name
+            fi
+        fi
+        have_done_root_filesystem=1
+    done
+
+done
+
+######################################################################
+
+
+# Changes that need to be made to the top level now.
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do
+    # Add a telnet service.  This may not be necessary for long once I've
+    # got the OpenBSD inetd working.
+    echo ${PARTITION_NAME}telnet ${TELNET_PORT_START_AT}/tcp >> /etc/services
+    let TELNET_PORT_START_AT=TELNET_PORT_START_AT+TELNET_PORT_ADDITION
+    echo "${PARTITION_NAME}telnet stream tcp nowait root /usr/sbin/chroot chroot $FGVM_ROOTS/${PARTITION_NAME} /usr/lbin/telnetd -b /etc/issue.netpartition" >> /etc/inetd.conf
+    echo "${PARTITION_NAME}" >> $FGVM_PARTITION_LIST
+done
+
+inetd -c
+
+$FGVM_BIN_DIR/partition-filesystem-chamges.sh $PARTITION_NAMES_LIST
+$FGVM_BIN_DIR/printer-setup.pl $PARTITION_NAMES_LIST
+
+
+@
+
+
+1.6
+log
+@Created sbin-skel directory.  Now we copy everything from there.
+@
+text
+@d17 1
+a17 2
+mkdir -p /partition
+cd /partition
+d19 3
+d42 1
+a42 1
+        mount -F $FILESYSTEM_TYPE /dev/vg${partition_name}partition/${lvol_name} /partition/${partition_name}${mount_point}
+d45 2
+a46 2
+        echo "Copying files into /partition/${partition_name}${mount_point}"
+        find . -xdev -depth -print | cpio -pxdmv /partition/${partition_name}${mount_point} > /dev/null
+d49 1
+a49 1
+         echo "# This is a fake /etc/fstab for this partition" > /partition/${partition_name}/etc/fstab
+d51 1
+a51 1
+        echo "/dev/vg${partition_name}partition/${lvol_name} ${mount_point} $FILESYSTEM_TYPE $FILESYSTEM_MOUNT_OPTIONS 0 2" >> /partition/${partition_name}/etc/fstab
+d92 1
+a92 1
+    if /partition/admin/create-volume-group.pl /dev/vg${PARTITION_NAME}partition
+d98 1
+a98 1
+    mkdir -p /partition/${PARTITION_NAME}
+d125 2
+d129 2
+a130 2
+    echo "${PARTITION_NAME}telnet stream tcp nowait root /usr/sbin/chroot chroot /partition/${PARTITION_NAME} /usr/lbin/telnetd -b /etc/issue.netpartition" >> /etc/inetd.conf
+    echo "${PARTITION_NAME}" >> /partition/partition.list
+d135 2
+a136 44
+# Changes that need to be made to files in each partition.
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do 
+    # Unfortunately,  the copying of the toplevel introduces this...
+    # I should actually not copy it in the first place.  (And also
+    # think about the implications of a partition stored within vg00). 
+    rm -rf /partition/${PARTITION_NAME}/partition
+
+    # Don't know if we still need to do this.  It was for reboot.partition
+    cp /usr/contrib/bin/perl /partition/${PARTITION_NAME}/sbin
+
+    cp /partition/sbin-skel/* /partition/${PARTITION_NAME}/sbin/
+    cp /partition/etc-skel/* /partition/${PARTITION_NAME}/etc/
+
+    # reboot.partition
+    # This shuts down all processes within the partition.  Currently
+    # this just consists of lpshut and netstop.partition,  but it could have other things
+    # added later.  (e.g. shutdown oracle)
+    # init.partition
+    # This is the startup program.  At least, that's the idea. Currently
+    # it just does lpsched and /sbin/netstart.partition .  Later it
+    # will start up other daemons.
+    # netstart.partition
+    # This reads /etc/partition/netconf  and creates an aliased
+    # virtual interface (usually)
+    # netstop.partition 
+    # This removes the aliased interface created by netstart.partition
+    # partitionname
+    # Reports the contents of /etc/partitionname,  which should be the
+    # name of this partition.  
+
+    # Make a nice(r) message for incoming telnet.
+    cat /etc/issue > /partition/${PARTITION_NAME}/etc/issue.netpartition
+    # 
+    echo "Partition '${PARTITION_NAME}' of "$(hostname)"\n\n\n" >> \
+              /partition/${PARTITION_NAME}/etc/issue.netpartition
+    echo 'PS1="\['${PARTITION_NAME}'\] $PS1"' >>  \
+              /partition/${PARTITION_NAME}/etc/profile
+#    echo 'PS1="\['${PARTITION_NAME}'\] $PS1"' >> /partition/${PARTITION_NAME}/.profile
+    echo "${PARTITION_NAME}" > /partition/${PARTITION_NAME}/etc/partitionname
+done
+
+
+/partition/admin/printer-setup.pl $PARTITION_NAMES_LIST
+@
+
+
+1.5
+log
+@Telnet port now works correctly.
+Fixed up problems with partition's /etc/fstab
+Fixed up problems with writing to /etc/issue.netpartition
+@
+text
+@a4 1
+
+d22 2
+a28 1
+######################################################################
+a29 26
+
+if [ "$THIS_IS_THE_FIRST_VM" -eq 1 ]
+then
+# The isl mounts all filesystems,  updates printers and device files
+# and then launches   chroot /partition/... /sbin/init.partition
+cp ???? /partition/partition.isl
+# The fsu (file system unloader) runs  
+# chroot /partition/... /sbin/reboot.partition
+# unmounts all filesystems
+cp ???? /partition/partition.fsu
+# isl/mountall reads a partitions /etc/fstab and makes top-level 
+# mount commands to match it
+cp ????? /partition/isl/mountall.pl
+# fsu/umountall unmounts all of a partition's filesystems
+cp ????? /partition/fsu/umountall.pl
+# printer-setup removes all printer definitions within an environment
+# that have the same name as the top-level and replaces them by
+# remote prints to the top-level rlpdaemon
+cp ???? /partition/admin/printer-setup.pl
+# does a   cd /dev ; find . | cpio -pxdmv /partition/.../dev
+cp ???? /partition/admin/update-devices.sh
+# This program checks for the existence of volume groups and
+# creates them (interactively) if necessary
+cp ???? /partition/admin/create-volume-group.pl
+fi
+
+d133 6
+a138 1
+do  
+d141 5
+d147 1
+a147 1
+    # this just consists of lpshut,  but it could have other things
+d149 1
+a149 1
+    cp  /partition/sbin-skel/reboot.partition /partition/${PARTITION_NAME}/sbin/
+d151 12
+a162 4
+    # it just does a mount -a  (which doesn't work anyway).  Later it
+    # will start up appropriate daemons.
+    cp  /partition/sbin-skel/init.partition /partition/${PARTITION_NAME}/sbin/
+    # Make a nice(r) message for incoming telnet.m
+d165 6
+a170 2
+    echo "Partition '${PARTITION_NAME}' of "$(hostname)"\n\n\n" >> /partition/${PARTITION_NAME}/etc/issue.netpartition
+    echo 'PS1="\['${PARTITION_NAME}'\] $PS1"' >> /partition/${PARTITION_NAME}/etc/profile
+a176 21
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+######################################################################
+
+echo "All done"
+exit 0
+
+### Now,  it's franklins-specific
+# create whouse partitions
+for PARTITION_NAME in PARTITION_NAMES_LIST
+do
+    mkVolume ${PARTITION_NAME} 32 /whouse whouse
+    mkVolume ${PARTITION_NAME} 8000 /whouse/whqw1 whqw1
+    mkVolume ${PARTITION_NAME} 2000 /whouse/whsrc source
+done
+@
+
+
+1.4
+log
+@Volume group checks improved.
+Now calls /partition/admin/create-volume-group.pl to create,
+if necessary.
+@
+text
+@d3 1
+a3 1
+PARTITION_NAMES_LIST="remedytst remedydevel"
+d5 2
+a6 1
+TELNET_PORT_START_AT=9023
+d15 3
+d21 6
+d65 2
+a66 3
+        newfs -F vxfs /dev/vg${partition_name}partition/r${lvol_name}
+        echo "/dev/vg${partition_name}partition/${lvol_name} ${mount_point} vxfs delaylog 0 2" >> /partition/${partition_name}/etc/fstab
+        mount -F vxfs /dev/vg${partition_name}partition/${lvol_name} /partition/${partition_name}${mount_point}
+d69 7
+a75 1
+        find . -xdev -depth -print | cpio -pxdmv /partition/${partition_name}${mount_point}
+d78 2
+a79 1
+        echo "Could not create /dev/vg{$partition_name}partition/$lvol_name of $size Mb"
+d113 1
+a113 1
+for PARTITION_NAME in PARTITION_NAMES_LIST
+d116 6
+a121 1
+    /partition/admin/create-volume-group.pl /dev/vg${PARTITION_NAME}
+d129 1
+a129 1
+            if [ "$fs" = "root" -a "$have_done_root_filesystem" -eq 1 ]
+d131 1
+a131 1
+                :
+d147 1
+a147 1
+for PARTITION_NAME in PARTITION_NAMES_LIST
+d158 1
+a158 1
+for PARTITION_NAME in PARTITION_NAMES_LIST
+d165 1
+a165 1
+    cp  /partition/sbin-skel/reboot.partition /partition/{$PARTITION_NAME}/sbin/
+d169 1
+a169 1
+    cp  /partition/sbin-skel/init.partition /partition/{$PARTITION_NAME}/sbin/
+d173 1
+a173 1
+    echo "Partition '${PARTITION_NAME}' of "$(hostname)"\n\n\n" > /etc/issue.netpartition
+@
+
+
+1.3
+log
+@Fixed up two typos.
+ cp /partition -> cd /partition
+ for .... in PARTITION_NAMES_LIST -> for ... in $PARTITION_NAMES_LIST
+@
+text
+@a17 12
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do
+    if [ -d /dev/vg${PARTITION_NAME}partition ]
+    then
+        echo "Good.  /dev/vg${PARTITION_NAME}partition exists"
+    else
+        echo "Ouch!  Please create the volume group /dev/vg${PARTITION_NAME}partition"
+        echo "Give it enough room to copy all the data you need."
+        exit 1
+    fi
+done
+
+d41 3
+d99 2
+a119 3
+    #${PARTITION_NAME}.isl
+
+    #find /usr /var /home /opt /tmp -xdev -depth -print | cpio -pxdmv /partition/${PARTITION_NAME}/
+d131 1
+@
+
+
+1.2
+log
+@Change: to exit before warehouse copy.
+@
+text
+@d15 1
+a15 1
+cp /partition
+d18 1
+a18 1
+for PARTITION_NAME in PARTITION_NAMES_LIST
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d179 2
+a180 1
+
+@

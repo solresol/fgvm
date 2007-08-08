@@ -1,0 +1,45 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+open(PARTITION_LIST,$FGVM_PARTITION_LIST) || die "Couldn't open $FGVM_PARTITION_LIST, $!, stopped";
+
+@all_partitions = ();
+while (<PARTITION_LIST>) {
+  chop; 
+  @all_partitions = (@all_partitions,$_);
+}
+
+sub copy {
+  ($src,$dest) = @_;
+  system("cp -p $src $dest");
+}
+
+$|=1;
+
+foreach $filename (@ARGV) {
+  if ($filename !~ m:^/:) {
+   # relative path!
+   $pwd = `pwd`;
+   $filename = $pwd . "/" . $filename;
+  }
+
+  if ( -f $filename ) {
+     print "$filename";
+    foreach $partition (@all_partitions) {
+     system("cp $filename $FGVM_ROOTS/$partition".$filename); 
+     print " [$partition] "
+    }    
+    print "\n";
+  } elsif ( -d $filename ) {
+    print "$filename";
+    foreach $partition (@all_partitions) {
+     system ("cp -Rp $filename $FGVM_ROOTS/$partition".$filename);
+     print " [$partition] ";
+    }
+   print "\n";
+  } else {
+    print STDERR "Don't know what to do with $filename\n";
+  }
+}
+

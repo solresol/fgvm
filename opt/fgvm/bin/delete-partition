@@ -1,0 +1,47 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+sub is_block_device {
+  ($devicefile) = @_;
+  return (`ls -l $devicefile` =~ /^b/);
+}
+
+sub remove_from_file {
+   ($filename,$line_reference) = @_;
+   $write_filename = $filename . ".pttmp";
+   open(OUTPUT,">$write_filename") || die "Can't write to $write_filename";
+   open(INPUT,"$filename") || die "Couldn't open $filename";
+   while (<INPUT>) {
+     if (/$line_reference/ )  { # do nothing
+      } else { print OUTPUT $_; }
+   }
+   close (INPUT);
+   close  (OUTPUT);
+   system("cp $write_filename $filename");  # so that we preserve permissions
+   system("rm -f $write_filename");   # clean up afterwards
+}
+
+foreach $partition (@ARGV) {
+  system("$FGVM_BIN_DIR/partition.fsu $partition");
+  $vg = "/dev/vg${partition}partition";
+  $listing = `ls $vg`;
+ LVOL:
+  foreach $lvol (split(/\s+/,$listing)) {
+     next LVOL if $lvol =~ /group/;
+     $lvol = "/dev/vg${partition}partition/".$lvol;
+     next unless  &is_block_device($lvol);
+     print "Removing $lvol\n";
+     system("lvremove -A n -f $lvol");
+  }
+
+  $physical_volumes = `vgdisplay -v $vg|grep 'PV Name' | sed 's/.*PV Name *//'`;
+  foreach $pv (split(/\s+/,$physical_volumes)) {
+    system("vgreduce $vg $pv");  # the last time through the loop will fail...
+  } 
+
+  # ... because this only works if you have one disk left in the volume group
+  system("vgremove /dev/vg${partition}partition");
+  
+  &remove_from_file($FGVM_PARTITION_LIST,$partition);
+}

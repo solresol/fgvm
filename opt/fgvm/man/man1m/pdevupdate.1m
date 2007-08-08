@@ -1,0 +1,47 @@
+.TA p
+.TH pdevupdate 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pdevupdate \- update device files in a partition
+.SH SYNOPSIS
+.CR pdevupdate
+.IR \[ partition \]
+.RC ...
+.SH DESCRIPTION
+.CR pdevupdate
+is a simple loop copying the device files out of the toplevel
+/dev and into the appropriate partition's /dev directory. If
+no arguments are given,  it copies into all partitions.
+.PP
+This is useful to run after any kind of LVM operation,  since
+many LVM commands create extra device files (e.g. logical volume
+block and character devices).
+.PP
+It is run automatically by partition.isl(1m)
+.SH WARNINGS
+Since it is just running a find ... | cpio ....,  there will
+be many cpio messages.  These can usually be ignored.
+.SH BUGS
+.CR pdevupdate
+does not remove unused device files.  On the other hand, it
+is fairly save to do 
+.C "rm -rf /dev/*"
+in a partitioned environment,  and then recreate the devices
+since very processes will be using the device files in any
+significant way.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+find(1),
+cpio(1),
+pls(1),
+partition.isl(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

@@ -1,0 +1,6 @@
+# This file defines one variable: PARTITION_SAFE_PACKAGES
+# It is a list of filenames (within /sbin/init.d) of packages
+# that may be started safely.  The usual messages will get
+# printed.  Being not present is not a problem.
+PARTITION_SAFE_PACKAGES="lp cron ssh sshd oracle syslogd"
+# other possibilities could include ns-fasttrack or apache

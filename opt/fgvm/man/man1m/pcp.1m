@@ -1,0 +1,47 @@
+.TA p
+.TH pcp 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pcp \- simple wrapper to cp
+.SH SYNOPSIS
+.CR pcp
+.IR ... cp_args ...
+.RC partition:
+.HP
+.CR pcp
+.IR ... cp_args ...
+.RC partition:/some/directory
+.HP
+.CR pcp
+.IR filename
+.RC partition:/some/file
+.HP
+.SH DESCRIPTION
+.CR pcp
+is a simple wrapper to cp(1).  All it does is analyse its last
+argument and replace "partition:..." by the appropriate directory.
+It even prints to stdout what it chose to do.  It then exec's the
+appropriate cp command.
+.PP
+.SH EXTERNAL INFLUENCES
+Anything that influences cp(1) will influence pcp.
+.SH WARNINGS
+Unknown partition .... 
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must be a Perl4-compatible interpreter.
+.SH BUGS
+Probably many.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+cp(1),
+pls(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

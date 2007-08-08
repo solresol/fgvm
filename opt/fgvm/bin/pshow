@@ -1,0 +1,30 @@
+#!/usr/bin/ksh
+
+PATH=/usr/sbin:/usr/bin:/usr/contrib/bin
+
+. /etc/opt/fgvm/environ.sh
+PARTITIONS=$*
+if [ "$PARTITIONS" = "" ]
+then
+   PARTITIONS=$(cat $FGVM_PARTITION_LIST)
+fi
+
+for PARTITION in $PARTITIONS
+do
+  echo " [ $PARTITION ] "
+  mountcount=$(mount | grep $FGVM_ROOTS/$PARTITION | wc -l )
+  if [ "$mountcount" = "1" ] 
+  then
+    echo "   pseudo-single user mode."
+  elif [ "$mountcount" = "0" ]
+  then
+    echo "   down."
+  else
+    echo "   $mountcount filesystems mounted."
+    PROCESS_COUNT=$(chroot $FGVM_ROOTS/$PARTITION  /usr/bin/ps -e | wc -l)
+    let PROCESS_COUNT=PROCESS_COUNT-1
+    echo "   $PROCESS_COUNT processes running"
+  fi
+done
+
+    

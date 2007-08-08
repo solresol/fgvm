@@ -1,0 +1,20 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+#$cmd = "/opt/fgvm/lbin/partition_of " . 
+open(PARTITION_OF,"/opt/fgvm/lbin/partition_of ".join(" ",@ARGV)."|")
+  || die "Couldn't run /opt/fgvm/lbin/partition_of";
+
+
+$id_to_partition{`/opt/fgvm/lbin/partition_of`} = 'toplevel';
+foreach $partition (&FGVM_PARTITIONS() ) {
+ $id_to_partition{`cat $FGVM_ROOTS/$partition/etc/partition/root_id`} =
+    $partition;
+}
+
+$i = 0;
+while (<PARTITION_OF>) {
+  $pid = $ARGV[$i++];
+   print "$pid is in partition $id_to_partition{$_}\n";
+}

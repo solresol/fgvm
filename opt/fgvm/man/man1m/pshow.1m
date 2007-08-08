@@ -1,0 +1,42 @@
+.TA p
+.TH pshow 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pshow \- show simple status of some partitions
+.SH SYNOPSIS
+.CR pshow
+.IR \[ partition \]
+.RC ...
+.SH DESCRIPTION
+.CR pshow
+checks for filesystems mounted below the partition's root and
+for processes which a chroot'ed at the partition's root. If no
+arguments are given,  shows status of all partitions.
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+Obviously,  if a partition is in a bizarre state,  pshow won't
+give reasonable results.
+.SH BUGS
+Probably many.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/partition/root_id
+in each partition
+.TP
+.CR /usr/bin/ps
+in each partition 
+.TP
+.CR /etc/mnttab
+in the top level
+.TP
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.SH SEE ALSO
+.SH STANDARDS COMPLIANCE
+None whatsoever

@@ -1,0 +1,22 @@
+reboot.partition
+This shuts down all processes within the partition.  Currently
+this just consists of lpshut and netstop.partition,  but it could have other things
+added later.  (e.g. shutdown oracle)
+
+init.partition
+This is the startup program.  At least, that's the idea. Currently
+it just does lpsched and /sbin/netstart.partition .  Later it
+will start up other daemons.
+
+netstart.partition
+This reads /etc/partition/netconf  and creates an aliased
+virtual interface (usually)
+
+netstop.partition 
+This removes the aliased interface created by netstart.partition
+
+partitionname
+Reports the contents of /etc/partitionname,  which should be the
+name of this partition.  
+
+

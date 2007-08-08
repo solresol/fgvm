@@ -1,0 +1,171 @@
+head     1.3;
+access   ;
+symbols  ;
+locks    root:1.3; strict;
+comment  @# @;
+
+
+1.3
+date     99.05.07.11.04.39;  author root;  state Exp;
+branches ;
+next     1.2;
+
+1.2
+date     99.05.07.10.44.19;  author root;  state Exp;
+branches ;
+next     1.1;
+
+1.1
+date     99.05.07.10.02.07;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@A sub partition will have some different files to a toplevel.
+This program makes those changes.
+@
+
+
+1.3
+log
+@Added man skel.
+Added link from /usr/bin/kill to /sbin/kill in partitions.
+@
+text
+@#!/usr/bin/ksh
+
+# Updates files within a partition.
+# 
+# The following things happen.
+#
+# All BAD_PROGRAMS (things that affect the whole system)
+# are removed.
+#
+# A bunch of things from /partition/sbin-skel get copied in
+#
+# /etc/profile gets replaced and has an alias added, and PS1 modified
+# /etc/issue.netpartition  gets overwritten
+# /etc/partition/netconf gets overwritten if it does not exist
+
+BAD_PROGRAMS="/usr/bin/kill /usr/sbin/shutdown /usr/sbin/reboot /sbin/reboot /sbin/init /sbin/umountall /usr/sbin/inetd"
+
+. /etc/opt/fgvm/environ.sh
+
+PARTITION_NAMES_LIST=$*
+
+if [ "$PARTITION_NAMES_LIST" = "" ]
+then
+   PARTITION_NAMES_LIST=$(cat $FGVM_PARTITION_LIST)
+fi
+
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do 
+    PARTITION_ROOT="$FGVM_ROOTS/${PARTITION_NAME}"
+    # Unfortunately,  the copying of the toplevel introduces this...
+    # I should actually not copy it in the first place.  (And also
+    # think about the implications of a partition stored within vg00). 
+    rm -rf ${PARTITION_ROOT}/partition
+    for program in $BAD_PROGRAMS
+    do
+      rm -f ${PARTITION_ROOT}/$program
+    done
+
+    # Don't know if we still need to do this.  It was for reboot.partition
+    cp /usr/contrib/bin/perl ${PARTITION_ROOT}/sbin
+
+    rm -f /tmp/netconf.${PARTITION_NAME}
+    if [ -f ${PARTITION_ROOT}/etc/partition/netconf ]
+    then
+        cp ${PARTITION_ROOT}/etc/partition/netconf /tmp/netconf.${PARTITION_NAME}
+    fi
+    cp -Rp $FGVM_SKELETON_ETC/* ${PARTITION_ROOT}/etc/
+    cp -Rp $FGVM_SKELETON_SBIN/* ${PARTITION_ROOT}/sbin/
+    cp -Rp $FGVM_SKELETON_MAN/* ${PARTITION_ROOT/usr/share/man/
+
+    if [ -f /tmp/netconf.${PARTITION_NAME} ]
+    then
+        cp /tmp/netconf.${PARTITION_NAME} ${PARTITION_ROOT}/etc/partition/netconf 
+    fi
+
+    # fun and games with our modified kill
+    rm -f ${PARTITION_ROOT}/usr/bin/kill
+    ln -s /sbin/kill ${PARTITION_ROOT}
+    
+    # Make a nice(r) message for incoming telnet.
+    cat /etc/issue > ${PARTITION_ROOT}/etc/issue.netpartition
+    # 
+    echo "Partition '${PARTITION_NAME}' of "$(hostname)"\n\n\n" >> \
+              ${PARTITION_ROOT}/etc/issue.netpartition
+    cp -p /etc/profile ${PARTITION_ROOT}/etc
+    echo 'PS1="\['${PARTITION_NAME}'\] \$PWD"' >>  \
+              ${PARTITION_ROOT}/etc/profile
+    echo alias kill=/sbin/kill >> ${PARTITION_ROOT}/etc/profile
+    echo "${PARTITION_NAME}" > ${PARTITION_ROOT}/etc/partitionname
+done
+
+
+#${FGVM_BIN_DIR}/printer-setup.pl $PARTITION_NAMES_LIST
+
+
+@
+
+
+1.2
+log
+@Used parameterised variables.
+@
+text
+@d49 1
+d56 4
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d18 2
+d24 1
+a24 1
+   PARTITION_NAMES_LIST=$(cat /partition/partition.list)
+d29 1
+d33 1
+a33 1
+    rm -rf /partition/${PARTITION_NAME}/partition
+d36 1
+a36 1
+      rm -f /partition/${PARTITION_NAME}$program
+d40 1
+a40 1
+    cp /usr/contrib/bin/perl /partition/${PARTITION_NAME}/sbin
+d43 1
+a43 1
+    if [ -f /partition/${PARTITION_NAME}/etc/partition/netconf ]
+d45 1
+a45 1
+        cp /partition/${PARTITION_NAME}/etc/partition/netconf /tmp/netconf.${PARTITION_NAME}
+d47 2
+a48 2
+    cp -Rp /partition/etc-skel/* /partition/${PARTITION_NAME}/etc/
+    cp -Rp /partition/sbin-skel/* /partition/${PARTITION_NAME}/sbin/
+d52 1
+a52 1
+        cp /tmp/netconf.${PARTITION_NAME} /partition/${PARTITION_NAME}/etc/partition/netconf 
+d56 1
+a56 1
+    cat /etc/issue > /partition/${PARTITION_NAME}/etc/issue.netpartition
+d59 2
+a60 2
+              /partition/${PARTITION_NAME}/etc/issue.netpartition
+    cp -p /etc/profile /partition/${PARTITION_NAME}/etc
+d62 3
+a64 3
+              /partition/${PARTITION_NAME}/etc/profile
+    echo alias kill=/sbin/kill >> /partition/${PARTITION_NAME}/etc/profile
+    echo "${PARTITION_NAME}" > /partition/${PARTITION_NAME}/etc/partitionname
+d68 1
+a68 1
+#/partition/admin/printer-setup.pl $PARTITION_NAMES_LIST
+@

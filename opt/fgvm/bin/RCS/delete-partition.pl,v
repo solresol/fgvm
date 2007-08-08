@@ -1,0 +1,68 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    root:1.1; strict;
+comment  @@;
+
+
+1.1
+date     99.05.07.10.45.56;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Removes a partition altogether,  including its
+volume group.
+@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+sub is_block_device {
+  ($devicefile) = @@_;
+  return (`ls -l $devicefile` =~ /^b/);
+}
+
+sub remove_from_file {
+   ($filename,$line_reference) = @@_;
+   $write_filename = $filename . ".pttmp";
+   open(OUTPUT,">$write_filename") || die "Can't write to $write_filename";
+   open(INPUT,"$filename") || die "Couldn't open $filename";
+   while (<INPUT>) {
+     if (/$line_reference/ )  { # do nothing
+      } else { print OUTPUT $_; }
+   }
+   close (INPUT);
+   close  (OUTPUT);
+   rename($write_filename,$filename);
+}
+
+foreach $partition (@@ARGV) {
+  system("$FGVM_BIN_DIR/partition.fsu $partition");
+  $listing = `ls /dev/vg${partition}partition/`;
+ LVOL:
+  foreach $lvol (split(/\s+/,$listing)) {
+     next LVOL if $lvol =~ /group/;
+     $lvol = "/dev/vg${partition}partition/".$lvol;
+     next unless  &is_block_device($lvol);
+     print "Removing $lvol\n";
+     system("lvremove -A n -f $lvol");
+  }
+
+  # actually,  this only works if you have one disk left in the volume group
+  system("vgremove /dev/vg${partition}partition");
+  
+  &remove_from_file($FGVM_PARTITION_LIST,$partition);
+  &remove_from_file("/etc/inetd.conf",$partition."telnet"); 
+  &remove_from_file("/etc/services",$partition."telnet");
+}
+@

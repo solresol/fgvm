@@ -1,0 +1,124 @@
+#!/usr/bin/ksh -x
+
+PARTITION_NAMES_LIST="$*"
+
+ROOT_VOLUME_GROUP="/dev/vg00"
+#ROOT_VOLUME_GROUP="/dev/vgroot"
+
+THIS_IS_THE_FIRST_VM=0
+#THIS_IS_THE_FIRST_VM=1
+
+FILESYSTEM_TYPE=vxfs
+FILESYSTEM_MOUNT_OPTIONS="delaylog"
+
+. /etc/opt/fgvm/environ.sh
+
+mkdir -p $FGVM_ROOTS
+cd $FGVM_ROOTS
+
+#################### mkVolume function ####################
+
+function mkVolume {
+    partition_name=$1
+    size=$2
+    mount_point=$3
+    lvol_name=$4
+    if lvcreate -n $lvol_name -L $size /dev/vg${partition_name}partition
+    then
+        newfs -F $FILESYSTEM_TYPE /dev/vg${partition_name}partition/r${lvol_name}
+        mount -F $FILESYSTEM_TYPE /dev/vg${partition_name}partition/${lvol_name} $FGVM_ROOTS/${partition_name}${mount_point}
+        p=`pwd`
+        cd ${mount_point}
+        echo "Copying files into $FGVM_ROOTS/${partition_name}${mount_point}"
+        find . -xdev -depth -print | cpio -pxdmv $FGVM_ROOTS/${partition_name}${mount_point} > /dev/null
+        if [ "${mount_point}" = "/" ] 
+        then
+         echo "# This is a fake /etc/fstab for this partition" > $FGVM_ROOTS/${partition_name}/etc/fstab
+        fi
+        echo "/dev/vg${partition_name}partition/${lvol_name} ${mount_point} $FILESYSTEM_TYPE $FILESYSTEM_MOUNT_OPTIONS 0 2" >> /$FGVM_ROOTS/${partition_name}/etc/fstab
+        cd $p
+    else
+        echo "Could not create /dev/vg${partition_name}partition/$lvol_name of $size Mb"
+	exit 1
+    fi
+}
+
+######################################################################
+
+function root_logical_volumes {
+    vgdisplay -v $ROOT_VOLUME_GROUP | grep 'LV Name' | sed 's/ *LV Name *//'
+}
+
+function root_filesystem_device {
+    devnm / | cut -f1 -d' '
+}
+
+function filesystem_of_lvol {
+    mount | grep $1 | cut -f1 -d' '
+}
+
+function make_a_sensible_lvol_name {
+    NAME=$(echo $1 | sed 's:^/::' | sed 's:/:.:')
+    if [ "$NAME" = "" ]
+    then
+        NAME="root"
+    fi
+    echo $NAME
+}
+
+function lvol_size {
+    lvdisplay $1 | grep 'LV Size' | cut -c29-
+}
+
+################# COPY FILESYSTEM INTO PARTITION ################
+
+
+for PARTITION_NAME in $PARTITION_NAMES_LIST
+do
+    # Do we have appropriate volume group?
+    if ${FGVM_BIN_DIR}/create-volume-group.pl /dev/vg${PARTITION_NAME}partition
+    then
+      echo /dev/vg${PARTITION_NAME}partition exists
+    else
+      exit 1
+    fi
+    mkdir -p ${FGVM_ROOTS}/${PARTITION_NAME}
+    have_done_root_filesystem=0
+    for device in $(root_filesystem_device) $(root_logical_volumes)
+    do
+        fs=$(filesystem_of_lvol $device)
+        if [ "$fs" != "" ]
+        then
+            if [ "$fs" = "/" -a "$have_done_root_filesystem" -eq 1 ]
+            then
+                echo "There is no need to do the root filesystem again "
+            else
+                lvol_name=$(make_a_sensible_lvol_name $fs)
+                size=$(lvol_size $device)
+                mkVolume ${PARTITION_NAME} $size $fs $lvol_name
+            fi
+        fi
+        have_done_root_filesystem=1
+    done
+
+    # somewhere in here, I should check that inetd.conf is using
+
+    if ! grep -q destswitch /etc/inetd.conf
+    then
+       banner "Warning!"
+       echo "I noticed that /etc/inetd.conf is not using destswitch"
+       echo "Perhaps you should read the destswitch(1m) man page."
+       echo
+       echo "Press RETURN to continue."
+       read
+    fi
+    echo "${PARTITION_NAME}" >> $FGVM_PARTITION_LIST
+    $FGVM_BIN_DIR/partition-filesystem-changes.sh ${PARTITION_NAME}
+    $FGVM_BIN_DIR/plpsetup ${PARTITION_NAME}
+    $FGVM_BIN_DIR/partition.isl ${PARTITION_NAME}
+done
+
+inetd -c
+
+
+

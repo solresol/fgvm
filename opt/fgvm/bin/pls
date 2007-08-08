@@ -1,0 +1,5 @@
+#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+cat $FGVM_PARTITION_LIST

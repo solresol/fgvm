@@ -1,0 +1,37 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    root:1.1; strict;
+comment  @# @;
+
+
+1.1
+date     99.05.07.10.21.26;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Prints out the /etc/partition/netconf of each
+defined partition.
+@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/bin/ksh
+
+. /etc/opt/fgvm/environ.sh
+
+for PARTITION in $(cat /etc/opt/fgvm/partition.list)
+do
+  echo "[ $PARTITION ]"
+  grep -v '^#' $FGVM_ROOTS/$PARTITION/etc/partition/netconf
+  echo
+done
+
+@

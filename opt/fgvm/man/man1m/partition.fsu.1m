@@ -1,0 +1,54 @@
+.TA p
+.TH partition.fsu 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+partition.fsu \- partition final system unloader
+.SH SYNOPSIS
+.CR partition.fsu
+.IR \[ partition \]
+.RC ...
+.SH DESCRIPTION
+.CR partition.fsu
+shuts down a partition.  It runs the partition's reboot.partition command,
+and then attempts to unmount all its filesystems.  If given no arguments,
+it shuts down every partition.
+.PP
+Because of bugs in HP's implementation of mount(1m), mountall(1m), umount(1m)
+and umountall(1m),  even "non-root" filesystems need to umounted outside
+of the chroot'ed environment.  Therefore, this is a program umountall.pl(1m)
+to perform this task.  This may change in the future.
+.PP
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+umountall.pl requires /usr/contrib/bin/perl.
+.SH BUGS
+If reboot.partition was unable to kill all processes,  the umountall.pl
+will fail.
+.PP
+Probably many, many others.
+.SH FILES
+.PD 0
+.TP 35
+.CR /sbin/reboot.partition
+in each partition
+.TP
+.CR /etc/fstab
+.TP in each partition
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/environ.pl
+ditto
+.TP
+.CR /opt/fgvm/fsu/umountall.pl
+.PD
+.SH SEE ALSO
+partition.isl(1m),
+pls(1m),
+pshow(1m),
+pps(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

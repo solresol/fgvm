@@ -1,0 +1,25 @@
+#!/usr/bin/ksh
+
+export PATH=/usr/sbin:/usr/bin:/usr/contrib/bin
+
+. /etc/opt/fgvm/environ.sh
+partitions_to_do=""
+
+while grep -q -e $1 $FGVM_PARTITION_LIST
+do
+  partitions_to_do="$partitions_to_do $1"
+  shift
+  if [ "$*" = "" ] 
+  then
+    echo "Not enough arguments given.  Must have some arguments after the partition list"
+    echo "Try adding  -ef    to the end of the command"
+    exit 1
+  fi
+done
+
+for partition in $partitions_to_do
+do
+  echo " [ $partition ] "
+  chroot $FGVM_ROOTS/$partition /usr/bin/ps $*
+done
+ 

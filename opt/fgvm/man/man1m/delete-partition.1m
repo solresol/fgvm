@@ -1,0 +1,70 @@
+.\" $Header: ps.1,v 80.1 96/10/16 15:14:49 ssa Exp $
+.TA p
+.TH delete-partition 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+delete-partition \- delete a chrootable environment
+.SH SYNOPSIS
+.CR delete-partition
+.IR partition
+.RC ...
+.SH DESCRIPTION
+.CR delete-partition
+destroys a chrootable environment.
+.PP
+It does several things.  Firstly,  it shuts down the partition
+with partition.fsu(1m).  This will unmount all filesystems within
+that partition,  allowing the logical volumes  of the form
+/dev/vgPARTITIONpartition/xxx to be removed.  Then the volume
+group is removed, reducing out physical volumes if necessary.
+Finally, /etc/opt/fgvm/partition.list is modified to remove any reference to
+this partition.
+.PP
+If this was the last partition that you had,  you may want to consider
+removing destswitch(1m) from /etc/inetd.conf.
+.PP
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must exist and be a Perl4-compatible interpreter.
+.SH BUGS
+Doesn't check to see that the thing you are deleting actually exists, so
+you could do all sorts of mischief if you wanted to.  On the other hand,
+if it does get stuck halfway for some reason,  you can always run it again.
+.PP
+.SH FEATURES
+It might not count as a bug,  but if the partition used logical 
+volumes in a volume group not called /dev/vgPARTITIONpartition,  those
+logical volumes will not be removed.  (Which is good if you were wanting
+to use them in another partition).
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/inetd.conf
+.TP
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.PD
+.SH SEE ALSO
+create-partition(1m),
+destswitch(1m),
+chroot(1),
+inetd(1m),
+create-volume-group.pl(1m),
+getpartition(1m),
+partition.isl(1m),
+partition.fsu(1m),
+plpsetup(1m),
+partition-filesystem-changes.sh(1m),
+pshow(1m),
+pnetconf(1m),
+pcp(1m)
+pdevupdate(1m),
+propogate(1m),
+pu(1m),
+swpropogate(1m),
+pps(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

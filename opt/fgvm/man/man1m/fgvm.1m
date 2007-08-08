@@ -1,0 +1,184 @@
+.TA r
+.TH fgvm 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.00
+.SH NAME
+fgvm \- description of \s-1FGVM\s0 commands
+.SH DESCRIPTION
+FGVM is a system for dividing up a big machine into a number of
+concurrent, segregated machines.  This is similar to IBM's  VM,
+except:
+
+.RS
+.TP 3
+\(bu
+There is only one operating system running.
+
+.TP
+\(bu There is only one process space,  so processes have unique
+identifier numbers across the whole machine,  rather than within
+each subpartition.
+
+.TP
+\(bu Interprocess communication can be done between processes 
+operating in different partitions.
+.RE
+
+.PP
+
+It works by exploiting the chroot(2) system call,  which lets
+processes have a "root" directory that is not the real one. If
+a process is chroot'ed into /partition/foobar,  then when it
+looks for the file /etc/passwd,  it will actually get
+/partition/foobar/etc/passwd.  This chroot state gets propogated
+to child processes,  thus providing a near-complete illusion of
+a full machine.
+
+.PP
+
+It does not require special hardware,  nor is it particularly
+confined to any special version of Unix.  
+
+.PP
+
+.SH TERMINOLOGY
+.CR partition
+means a chroot(2)-able environment.  By default,  these would
+be found in subdirectories of /partition.  A partition 
+called "foobar" would be /partition/foobar.  There would be
+a /partition/foobar/etc/passwd, /partition/foobar/etc/group,
+/partition/foobar/usr/bin/ls  and so on.
+.PP
+.CR toplevel
+means everything that is not a partition.  Processes which have
+been started without being chroot'ed know the real
+root directory.  These are occasionally described as being 
+"toplevel" processes.  Files are often copied from "the toplevel".
+.PP
+.CR starting
+a partition
+means mounting its filesystems and starting up its processes using
+init.partition.  Hence we talk about a partition being "up" or 
+"down"
+.PP
+.CR pseudo-single
+usermode means that just the "root" filesystem is mounted and no others. It
+is an intermediate  state between being up or down.
+.PP
+
+.SH GETTING STARTED
+Read the man page for create-partition(1m) and destswitch(1m).
+Find some spare diskspace and run create-partition.  Essentially,
+all this does is copy the root volume group into place,  and 
+then replace a couple of files within the partition.  If you're
+interested to find out,  look at the 
+.CR /opt/fgvm/skel
+directory,  at the script that does the changes
+.CR /opt/fgvm/bin/partition-filesystem-changes.sh 
+and if you have too much time on your hands,  the source
+in 
+.CR /opt/fgvm/src  .
+kill(1) and ps(1) have been modified to only operate within
+a partition.  Have a look at the man pages for them (they are
+best accessible from within an environment).
+
+.PP
+When create-partition(1m) has
+finished (usually 20-40 minutes),  you will want to set up the
+partition's networking.  
+Each partition needs to have assigned an IP 
+address, which is an aliases of a LAN card's physical  address.
+(This is a feature of some operating systems to allow multiple
+IP address per LAN card).   This is done by editting the
+partition's /etc/partition/netconf file.  This gets read by 
+the partition's /sbin/netstart.partition  when a partition gets
+started.
+
+.PP
+You can start and stop partitions with partition.isl(1m) 
+and partition.fsu(1m) respectively. 
+.PP
+
+
+.SH PACKAGES
+Since both the ps(1) and the kill(1) command found inside a partition
+have been tweaked to work only on the  partition's processes,  it is
+usually quite safe to use unchanged SVR4 startup/shutdown scripts within
+a partition.  In fact,  it is the recommended way of doing things.  
+.PP
+We don't have the sophisticated concept of run levels within partitions
+(although we could).  Instead,  there is a file /etc/partition/packages
+which defines a variable
+.CR PARTITION_SAFE_PACKAGES
+which is a list of files within the partition's /sbin/init.d  directory
+to be run if they exist.
+By default this list includes 
+.IR cron
+.IR lp
+.IR syslogd
+.IR ssh
+.IR oracle
+.PP
+It is not a problem having entries in /etc/partition/packages that 
+correspond to no actual files.  They are silently ignored.
+.PP
+
+.SH COMMAND SUMMARY
+.PD 0
+.TP 25
+.CR create-partition
+create a chrootable environment
+.TP
+.CR delete-partition 
+delete a chrootable environment
+.TP
+.CR destswitch 
+show simple status of some partitions
+.TP
+.CR getpartition
+state partition of processes
+.TP
+.CR partition.fsu
+partition final system unloader
+.TP
+.CR partition.isl
+partition final system unloader
+.TP
+.CR partitionname 
+print name of current partition
+.TP
+.CR pcp
+simple wrapper to cp
+.TP
+.CR pdevupdate
+update device files in a partition
+.TP
+.CR plpsetup
+update printer configuration in a partition
+.TP
+.CR pls 
+list all partitions
+.TP
+.CR pnetconf
+print netconf file of partitions
+.TP
+.CR pps
+report process status within some partition
+.TP
+.CR propogate
+update partitions from the toplevel
+.TP
+.CR pshow
+show simple status of some partitions
+.TP
+.CR pu
+switch partitions
+.TP
+.CR swpropogate
+update partitions' software from the toplevel
+.PD
+.SH CONTACT DETAILS
+If you have any questions about this product,  contact
+Aptec on 61 +2 8977 0000 .  It was mostly written by
+Greg Baker (greg.baker@aptec.net.au).
+

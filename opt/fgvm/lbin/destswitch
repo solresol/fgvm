@@ -1,0 +1,28 @@
+#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+foreach $partition (&FGVM_PARTITIONS()) {
+  open(NETCONF,"$FGVM_ROOTS/$partition/etc/partition/netconf")
+   || die "Couldn't open $FGMV_ROOTS/$partition/etc/partition/netconf";
+  # better would be to log to syslog
+ line:
+  while(<NETCONF>) {
+   next line unless /^\s*IP_ADDRESS="?(\d+\.\d+\.\d+\.\d+)"?/;
+   $partition_ip_address{$1} = $partition;
+  }
+  close(NETCONF);
+}
+
+
+$mysockaddr = getsockname(STDIN);
+if ($mysockaddr == -1) { print "Sorry!\n";  } 
+($dont_know,$port,$netA,$netB,$netC,$netD) = unpack("nncccc",$mysockaddr);
+#print "Connect to port=$port on $netA.$netB.$netC.$netD\n";
+$ip_address = "$netA.$netB.$netC.$netD";
+if (defined($partition_ip_address{"$ip_address"})) {
+#  print "Will chroot to $FGVM_ROOTS/$partition_ip_address{$ip_address}\n";
+   chroot("$FGVM_ROOTS/$partition_ip_address{$ip_address}");
+} 
+exec @ARGV;
+

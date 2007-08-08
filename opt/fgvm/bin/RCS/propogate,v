@@ -1,0 +1,72 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    root:1.1; strict;
+comment  @# @;
+
+
+1.1
+date     99.05.07.10.25.18;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@Copies a file or directory into all partitions.
+Useful for updating partitions when a change
+has been made at the top level.
+@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/contrib/bin/perl
+
+require '/etc/opt/fgvm/environ.pl';
+
+open(PARTITION_LIST,$FGVM_PARTITION_LIST) || die "Couldn't open $FGVM_PARTITION_LIST, $!, stopped";
+
+@@all_partitions = ();
+while (<PARTITION_LIST>) {
+  chop; 
+  @@all_partitions = (@@all_partitions,$_);
+}
+
+sub copy {
+  ($src,$dest) = @@_;
+  system("cp -p $src $dest");
+}
+
+$|=1;
+
+foreach $filename (@@ARGV) {
+  if ($filename !~ m:^/:) {
+   # relative path!
+   $pwd = `pwd`;
+   $filename = $pwd . "/" . $filename;
+  }
+
+  if ( -f $filename ) {
+     print "$filename";
+    foreach $partition (@@all_partitions) {
+     system("cp $filename $FGVM_ROOTS/$partition".$filename); 
+     print "."
+    }    
+    print "\n";
+  } elseif ( -d $filename ) {
+    print "$filename";
+    foreach $partition (@@all_partitions) {
+     system ("cp -Rp $filename $FGVM_ROOTS/$partition".$filename);
+     print ".";
+    }
+   print "\n";
+  } else {
+    print STDERR "Don't know what to do with $filename\n";
+  }
+}
+
+@

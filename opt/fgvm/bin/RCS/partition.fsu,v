@@ -1,0 +1,52 @@
+head     1.1;
+access   ;
+symbols  ;
+locks    root:1.1; strict;
+comment  @@;
+
+
+1.1
+date     99.05.07.10.35.27;  author root;  state Exp;
+branches ;
+next     ;
+
+
+desc
+@This is the final system unloader,  which 
+reboots a partition down to pseudo-single user mode,
+and then unmounts all filesystems,  including root.
+@
+
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#!/usr/bin/ksh
+# $Id$
+# partition.fsu  --- final system unloader
+. /etc/opt/fgvm/environ.sh
+
+ALL_PARTITIONS=$(cat $FGVM_PARTITION_LIST)
+
+if [ $# -eq 0 ]
+then
+   echo "Stopping all partitions"
+   for p in $ALL_PARTITIONS
+   do
+      echo "Stopping $p"
+      $0 $p
+   done
+else
+   PARTITION_NAME=$1
+   echo "Executing reboot to single user mode in $PARTITION_NAME ($1)"
+   chroot $FGVM_ROOTS/${PARTITION_NAME} /sbin/reboot.partition
+   echo "Unmounting non-root filesystems"
+   $FGVM_FSU_DIR/umountall.pl $PARTITION_NAME
+   echo "Unmounting root filesystem of $PARTITION_NAME"
+   umount /dev/vg${PARTITION_NAME}partition/root
+fi
+
+@

@@ -1,0 +1,81 @@
+.TA p
+.TH destswitch 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+destswitch \- show simple status of some partitions
+.SH SYNOPSIS
+.CR /opt/fgvm/lbin/destswitch 
+.IR program
+.RC args
+.RC ...
+.SH DESCRIPTION
+.CR destswitch
+is not designed to be run by hand.  It should
+be run only from inetd(1m).
+.PP
+In order to fake the capabilities of OpenBSD's inetd in HP-UX
+(in which it is possible to have different interfaces / same
+port number combinations),  destswitch examines the socket
+which it receives as its stdin.  In particular, it examines
+the target IP address.  It searches through each partition's
+/etc/partition/netconf file to find a match for this IP address.
+If a match is found,  destswitch does a chroot(2) into that
+partition,  and runs the program given on the command line
+(with whatever arguments were specified).
+.PP
+If no match was found,  the command gets run in the toplevel.
+.PP
+.SH EXAMPLES
+Common requirements are for telnet, ftp, rlogin, remsh and rcp
+to be accessible to subenvironments.
+Here are the appropriate lines for inetd.conf(4). Note that 
+destswitch does nothing with argv[0] (in the seventh column)
+,  and so it can safely
+be anything.
+.IP
+.C "ftp stream tcp nowait root /opt/fgvm/lbin/destswitch - /usr/lbin/ftpd -l"
+.IP
+.C "telnet stream tcp nowait root /opt/fgvm/lbin/destswitch destswitch /usr/lbin/telnetd   -b /etc/issue.netpartition"
+.IP
+.C "login stream tcp nowait root /opt/fgvm/lbin/destswitch hello /usr/lbin/rlogind"
+.IP
+.C "shell stream tcp nowait root /opt/fgvm/lbin/destswitch ignored /usr/lbin/remshd"
+.IP
+.C "exec stream tcp nowait root /opt/fgvm/lbin/destswitch _ /usr/lbin/rexecd"
+.PP
+Secure shell is not usually started from inetd.  It can listen on specific
+interfaces anyway,  and thus does not help from destswitch.
+.PP
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must be an executable and Perl4-compatible
+interpreter.
+.SH BUGS
+Probably many.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/partition/netconf
+in each partition
+.TP
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.TP
+.CR /etc/inetd.conf
+.SH SEE ALSO
+inetd(1m),
+inetd.conf(4),
+ftpd(1m),
+telnetd(1m),
+rlogind(1m),
+sshd(8),
+create-partition(1m),
+pshow(1m),
+pnetconf(1m).
+.SH STANDARDS COMPLIANCE
+None whatsoever

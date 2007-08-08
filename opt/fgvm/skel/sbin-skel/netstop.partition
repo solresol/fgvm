@@ -1,0 +1,24 @@
+#!/sbin/sh
+
+if [ -f /etc/partition/netconf ]
+then
+   . /etc/partition/netconf
+else
+   echo "/etc/partition/netconf missing."
+   echo "Probably no partition-specific networking to stop"
+   exit 2
+fi
+
+# netconf should look like this:
+#
+# INTERFACE_NAME="lan1:3"
+# IP_ADDRESS="10.12.5.199"
+# NETMASK="255.255.255.0"
+#
+# there is currently no support for more than one IP address in a partition
+# nor is there anything really clever with MC/ServiceGuard.
+
+ifconfig $INTERFACE_NAME 0.0.0.0
+#ifconfig $INTERFACE_NAME $IP_ADDRESS down netmask $NETMASK
+exit $?
+

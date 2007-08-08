@@ -1,0 +1,88 @@
+.TA p
+.TH create-partition 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+create-partition \- create a chrootable environment
+.SH SYNOPSIS
+.CR create-partition
+.IR partition
+.RC ...
+.SH DESCRIPTION
+.CR create-partition
+is the command that needs to be run to create an chootable
+environment. 
+.PP
+It does several things.  Firstly,  it checks to see if a volume
+group of the form /dev/vgPARTITIONpartition exists.  If it doesn't,
+you will be interactively prompted for disk device names so that
+it can create the volume group.
+.PP
+Next,  it duplicates all the logical volumes out of the root filesystem
+(including all data) into appropriately sized VxFS filesystems that
+it creates in the new volume group.
+.PP
+/etc/opt/fgvm/partition.list is updated to include the PARTITION
+name.
+.PP
+Finally,  the partition is "run",  and its filesystems extensively
+modified \-\- see partition-filesystem-changes.sh(1m).  Then 
+plpsetup(1m) is run on the partition.
+.PP
+You will probably want to edit the partition's /etc/partition/netconf file.
+(Updating DNS and /etc/hosts is a good idea as well.  I like to have
+a name in DNS for each partition -- it makes it much easier to
+for clients to connect to the right partition.  YMMV)
+Possibly you will also want to run some package install scripts
+(from /opt/fgvm/packages) and then restart the partition.  In order 
+to enable internet services (such as telnet(1)) you will need to
+modify inetd.conf(4) to use destswitch(1m).
+.SH EXTERNAL INFLUENCES
+.SH WARNINGS
+.SH DEPENDENCIES
+If the root volume group is in a bad state,  it just gets copied 
+blindly, possibly 
+.SH BUGS
+Doesn't pay attention to the filesystem type in the root logical 
+volumes.  Sometimes has a problem trying to work out the next
+unused minor number for creating a volume group.  If /home (say)
+is not in the root filesystem,  it will have to be copied manually
+into place.
+.PP
+Probably many, many others.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/partition/netconf
+in each partition
+.TP
+.CR /etc/services
+.TP
+.CR /etc/inetd.conf
+.TP
+.CR /etc/opt/fgvm/environ.sh
+locations of partition roots
+.PD
+.SH SEE ALSO
+destswitch(1m),
+delete-partition(1m),
+chroot(1),
+inetd(1m),
+inetd.conf(4),
+create-volume-group.pl(1m),
+getpartition(1m),
+partition.isl(1m),
+partition.fsu(1m),
+plpsetup(1m),
+partition-filesystem-changes.sh(1m),
+pshow(1m),
+pnetconf(1m),
+pcp(1m)
+pdevupdate(1m),
+propogate(1m),
+pu(1m),
+swpropogate(1m),
+pps(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever

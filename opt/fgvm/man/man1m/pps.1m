@@ -1,0 +1,779 @@
+.TA p
+.TH pps 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+pps \- report process status within some partition
+.SH SYNOPSIS
+.CR pps
+.RC partition 
+.RC ...
+.RC [ \-adeflP ]
+.RC [ \-g
+.IR grplist ]
+.RC [ \-p
+.IR proclist ]
+.RC [ \-R
+.IR prmgrplist ]
+.RC [ \-t
+.IR termlist ]
+.RC [ \-u
+.IR uidlist ]
+.SS XPG4 Synopsis
+.CR ps
+.RC partition 
+.RC ...
+.RC [ \-aAcdefHjlP ]
+.RC [ \-C
+.IR cmdlist ]
+.RC [ \-g
+.IR grplist ]
+.RC [ \-G
+.IR gidlist ]
+.RC [ \-n
+.IR namelist ]
+.RC [ \-o
+.IR format ]
+.RC [ \-p
+.IR proclist ]
+.RC [ \-R
+.IR prmgrplist ]
+.RC [ \-s
+.IR sidlist ]
+.RC [ \-t
+.IR termlist ]
+.RC [ \-u
+.IR uidlist ]
+.RC [ \-U
+.IR uidlist ]
+.SH DESCRIPTION
+.CR ps
+prints information about selected processes, in the specified partition(s).
+Use options to specify
+which processes to select and what information to print about them.
+.SS Process Selection Options
+.PP
+Use the following options to choose which processes should be selected.
+.PP
+NOTE: If an option is used in both the default (standard HP-UX) and
+XPG4 environments, the description provided here documents the default
+behavior.  Refer to the
+.CR UNIX95
+variable under EXTERNAL INFLUENCES for
+additional information on XPG4 behavior.
+.RS
+.TP 15
+(none)
+Select those processes associated with the current terminal.
+.TP
+.CR \-A
+(XPG4 Only.)  Select all processes.  (Synonym for
+.CR \-e .)
+.TP
+.CR \-a
+Select all processes except process group leaders and processes not
+associated with a terminal.
+.TP
+.CI \-C \0cmdlist
+(XPG4 Only.)  Select processes executing a command with a basename given in
+.IR cmdlist .
+.TP
+.CR \-d
+Select all processes except process group leaders.
+.TP
+.CR \-e
+Select all processes.
+.TP
+.CI \-g \0grplist
+Select processes whose process group leaders are given in
+.IR grplist .
+.TP
+.CI \-G \0gidlist
+(XPG4 Only.)  Select processes whose real group ID numbers or group
+names are given in
+.IR gidlist .
+.TP
+.CI \-n \0namelist
+(XPG4 Only.)  This option is ignored; its presence is allowed for
+standards compliance.
+.TP
+.CI \-p \0proclist
+Select processes whose process ID numbers are given in
+.IR proclist .
+.TP
+.CI \-R \0prmgrplist
+Select processes belonging to PRM process resource groups whose names
+or ID numbers are given in
+.IR prmgrplist .
+See DEPENDENCIES.
+.TP
+.CI \-s \0sidlist
+(XPG4 Only.)  Select processes whose session leaders are given in
+.IR sidlist .
+(Synonym for 
+.CR \-g ).
+.TP
+.CI \-t \0termlist
+Select processes associated with the terminals given in
+.IR termlist .
+Terminal identifiers can be specified in one of two forms:
+the device's file name (such as
+.CR tty04 )
+or if the device's file name starts with
+.CR tty ,
+just the rest of it (such as
+.CR 04 ).
+If the device's file is in a directory other than
+.CR /dev
+or
+.CR /dev/pty ,
+the terminal identifier must include the name
+of the directory under
+.CR /dev
+that contains the device file (such as
+.CR pts/5 ).
+.TP
+.CI \-u \0uidlist
+Select processes whose effective user ID numbers or login names are given in
+.IR uidlist .
+.TP
+.CI \-U \0uidlist
+(XPG4 Only.)  Select processes whose real user ID numbers or login names
+are given in
+.IR uidlist .
+.RE
+.PP
+If any of the
+.CR \-a ,
+.CR \-A ,
+.CR \-d ,
+or
+.CR \-e
+options is specified, the
+.CR \-C ,
+.CR \-g ,
+.CR \-G ,
+.CR \-p ,
+.CR \-R ,
+.CR \-t ,
+.CR \-u ,
+and
+.CR \-U
+options are ignored.
+.PP
+If more than one of
+.CR \-a ,
+.CR \-A ,
+.CR \-d ,
+and
+.CR \-e
+are specified, the least restrictive option takes effect.
+.PP
+If more than one of the
+.CR \-C ,
+.CR \-g ,
+.CR \-G ,
+.CR \-p ,
+.CR \-R ,
+.CR \-t ,
+.CR \-u ,
+and
+.CR \-U
+options
+are specified,
+processes will be selected if they match any of the options specified.
+.PP
+The lists used as arguments to the
+.CR \-C ,
+.CR \-g ,
+.CR \-G ,
+.CR \-p ,
+.CR \-R ,
+.CR \-t ,
+.CR \-u ,
+and
+.CR \-U
+options can be specified in one of two forms:
+.RS
+.TP 3
+\(bu
+A list of identifiers separated from one another by a comma.
+.TP
+\(bu
+A list of identifiers enclosed in quotation marks (\c
+.C """\c"
+) and separated from one another by a comma and/or one or more spaces.
+.RE
+.SS Output Format Options
+Use the following options to control which columns of data
+are included in the output listing.
+The options are cumulative.
+.RS
+.TP 15
+(none)
+.\"   PID TTY       TIME COMMAND
+The default columns are:
+.CR pid ,
+.CR tty ,
+.CR time ,
+and
+.CR comm ,
+in that order.
+.TP
+.CR \-f
+.\"     UID   PID  PPID  C    STIME TTY       TIME COMMAND
+Show columns
+.CR user ,
+.CR pid ,
+.CR ppid ,
+.CR cpu ,
+.CR stime ,
+.CR tty ,
+.CR time ,
+and
+.CR args ,
+in that order.
+.TP
+.CR \-l
+.\"  F S   UID   PID  PPID  C PRI NI     ADDR   SZ    WCHAN TTY       TIME COMD
+Show columns
+.CR flags ,
+.CR state ,
+.CR uid ,
+.CR pid ,
+.CR ppid ,
+.CR cpu ,
+.CR intpri ,
+.CR nice ,
+.CR addr ,
+.CR sz ,
+.CR wchan ,
+.CR tty ,
+.CR time ,
+and
+.CR comm ,
+in that order.
+.TP
+.CR \-fl
+Show columns
+.CR flags ,
+.CR state ,
+.CR user ,
+.CR pid ,
+.CR ppid ,
+.CR cpu ,
+.CR intpri ,
+.CR nice ,
+.CR addr ,
+.CR sz ,
+.CR wchan ,
+.CR stime ,
+.CR tty ,
+.CR time ,
+and
+.CR args ,
+in that order.
+.TP
+.CR \-c
+(XPG4 Only.)  Remove columns
+.CR cpu
+and
+.CR nice ;
+replace column
+.CR intpri
+with columns
+.CR cls
+and
+.CR pri .
+.TP
+.CR \-j
+(XPG4 Only.)  Add columns
+.CR pgid
+and
+.CR sid
+after column
+.CR ppid
+(or
+.CR pid ,
+if
+.CR ppid
+is not being displayed).
+.TP
+.CR \-P
+Add column
+.CR prmid
+(for
+.CR \-l )
+or
+.CR prmgrp
+(for
+.CR \-f
+or
+.CR \-fl )
+immediately before column
+.CR pid .
+See DEPENDENCIES.
+.TP
+.CI \-o \0format
+(XPG4 Only.)
+.I format
+is a comma- or space-separated list of the columns to display,
+in the order they should be displayed.  (Valid column names are listed
+below.)  A column name can optionally be followed by an equals sign
+.RC ( = )
+and a string to use as the heading for that column.  (Any commas or spaces
+after the equals sign will be taken as a part of the column heading; if more
+columns are desired, they must be specified with additional
+.CR \-o
+options.)  The width of the column will be the greater of the width of the
+data to be displayed and the width of the column heading.  If an empty
+column heading is specified for every heading, no heading line will be
+printed.  This option overrides options
+.CR \-c ,
+.CR \-f ,
+.CR \-j ,
+.CR \-l ,
+and
+.CR \-P ;
+if they are specified, they are ignored.
+.TP
+.CR \-H
+(XPG4 Only.)  Shows the process hierarchy.  Each process is displayed
+under its parent, and the contents of the
+.CR args
+or
+.CR comm
+column for that process is indented from that of its parent.  Note that this
+option is expensive in both memory and speed.
+.RE
+.PP
+The column names and their meanings are given below.  Except where noted,
+the default heading for each column is the uppercase form of the
+column name.
+.RS
+.TP 15
+.CR addr
+The memory address of the process, if resident;
+otherwise, the disk address.
+.TP
+.CR args
+The command line given when the process was created.
+This column should be the last one specified, if it is desired.
+Only a subset of the command line is saved by the kernel;
+as much of the command line will be displayed as is available.
+The output in this column may contain spaces.
+The default heading for this column is
+.CR COMMAND
+if
+.CR \-o
+is specified and
+.CR CMD
+otherwise.
+.TP
+.CR cls
+Process scheduling class, see
+.IR rtsched (1).
+.TP
+.CR comm
+The command name.  The output in this column may contain spaces.
+The default heading for this column is
+.CR COMMAND
+if
+.CR \-o
+is specified and
+.CR CMD
+otherwise.
+.TP
+.CR cpu
+Processor utilization for scheduling.  The default heading
+for this column is
+.CR C .
+.TP
+.CR etime
+Elapsed time of the process.  The default heading for this column is
+.CR ELAPSED .
+.TP
+.CR flags
+Flags (octal and additive) associated with the process:
+.RS 20
+.TP
+.PD 0
+.CR \00
+Swapped
+.TP
+.CR \01
+In core
+.TP
+.CR \02
+System process
+.TP
+.CR \04
+Locked in core (e.g., for physical I/O)
+.TP
+.CR 10
+Being traced by another process
+.TP
+.CR 20
+Another tracing flag
+.PD
+.RE
+.IP
+The default heading for this column is
+.CR F .
+.TP
+.CR intpri
+The priority of the process as it is stored internally by the kernel.
+This column is provided for backward compatibility and its use is not
+encouraged.
+.TP
+.CR gid
+The group ID number of the effective process owner.
+.TP
+.CR group
+The group name of the effective process owner.
+.TP
+.CR nice
+Nice value; used in priority computation (see
+.IR nice (1)).
+The default heading for this column is
+.CR NI .
+.TP
+.CR pcpu
+The percentage of CPU time used by this process during the last scheduling
+interval.  The default heading for this column is
+.CR %CPU .
+.TP
+.CR pgid
+The process group ID number of the process group to which this process belongs.
+.TP
+.CR pid
+The process ID number of the process.
+.TP
+.CR ppid
+The process ID number of the parent process.
+.TP
+.CR pri
+The priority of the process.  The meaning of the value depends on
+the process scheduling class; see
+.CR cls ,
+above, and
+.IR rtsched (1).
+.TP
+.CR prmid
+The PRM process resource group ID number.
+.TP
+.CR prmgrp
+The PRM process resource group name.
+.TP
+.CR rgid
+The group ID number of the real process owner.
+.TP
+.CR rgroup
+The group name of the real process owner.
+.TP
+.CR ruid
+The user ID number of the real process owner.
+.TP
+.CR ruser
+The login name of the real process owner.
+.TP
+.CR sid
+The session ID number of the session to which this process belongs.
+.TP
+.CR state
+The state of the process:
+.RS 20
+.TP
+.PD 0
+.CR 0
+Nonexistent
+.TP
+.CR S
+Sleeping
+.TP
+.CR W
+Waiting
+.TP
+.CR R
+Running
+.TP
+.CR I
+Intermediate
+.TP
+.CR Z
+Terminated
+.TP
+.CR T
+Stopped
+.TP
+.CR X
+Growing
+.PD
+.RE
+.IP
+The default heading for this column is
+.CR S .
+.TP
+.CR stime
+Starting time of the process.
+If the elapsed time is greater than 24 hours,
+the starting date is displayed instead.
+.TP
+.CR sz
+The size in physical pages of the core image of the process,
+including text, data, and stack space.
+Physical page size is defined by
+.CR _SC_PAGE_SIZE
+in the header file
+.CR <unistd.h>
+(see
+.IR sysconf (2)
+and
+.IR unistd (5)).
+.TP
+.CR time
+The cumulative execution time for the process.
+.TP
+.CR tty
+The controlling terminal for the process.  The default heading for
+this column is
+.CR TT
+if
+.CR -o
+is specified and
+.CR TTY
+otherwise.
+.TP
+.CR uid
+The user ID number of the effective process owner.
+.TP
+.CR user
+The login name of the effective process owner.
+.TP
+.CR vsz
+The size in kilobytes (1024 byte units) of the core image of the
+process.  See column
+.CR sz ,
+above.
+.TP
+.CR wchan
+The event for which the process is waiting or sleeping;
+if there is none, a hyphen (-) is displayed.
+.RE
+.SS Notes
+.CR ps
+prints the command name and arguments
+given at the time of the process was created.
+If the process changes its arguments while running (by writing
+to its
+.I argv
+array), these changes are not displayed by
+.CR ps .
+.PP
+A process that has exited and has a parent,
+but has not yet been waited for by the parent, is marked
+.CR <defunct>
+(see
+.GT "zombie process"
+in
+.IR exit (2)).
+.PP
+The time printed in the
+.CR stime
+column, and used in computing the value for the
+.CR etime
+column, is the time when the process was forked,
+.EM not
+the time when it was modified by
+.CR exec() .
+.PP
+To make the
+.CR ps
+output safer to display and easier to read, all control characters in the
+.CR comm
+and
+.CR args
+columns are displayed as "visible" equivalents
+in the customary control character format,
+.CI ^ x\f1.
+.SH EXTERNAL INFLUENCES
+.SS Environment Variables
+.CR UNIX95
+specifies to use the XPG4 behavior for this command.  The changes for
+XPG4 include support for the entire option set specified above and
+include the following behavioral changes:
+.RS
+.TP 2
+\(bu
+The
+.CR TIME
+column format changes from
+.IC mmmm : ss
+to
+.RI [\| dd \-\]\|\c
+.IC hh : mm : ss\f1.
+.TP
+\(bu
+When the
+.CR comm ,
+.CR args ,
+.CR user ,
+and
+.CR prmgrp
+fields are included by
+default or the
+.CR -f
+or
+.CR -l
+flags are used, the column headings of those fields
+change to
+.CR CMD ,
+.CR CMD ,
+.CR USER ,
+and
+.CR PRMGRP ,
+respectively.
+.TP
+\(bu 
+.CR -a ,
+.CR -d ,
+and
+.CR -g
+will select processes based on session rather than on
+process group.
+.TP
+\(bu
+The uid or user column displayed by
+.CR -f
+or
+.CR -l
+will display effective
+user rather than real user.
+.TP
+\(bu
+The
+.CR -u
+option will select users based on effective UID rather than
+real UID.
+.TP
+\(bu
+The
+.CR -C
+and
+.CR -H
+options, while they are not part of the XPG4 standard,
+are enabled.
+.RE
+.PP
+.CR LC_TIME
+determines the format and contents of date and time strings.
+If it is not specified or is null, it defaults to the value of
+.CR LANG .
+.PP
+If
+.CR LANG
+is not specified or is null, it defaults to
+.CR C
+(see
+.IR lang (5)).
+.PP
+If any internationalization variable contains an invalid setting,
+all internationalization variables default to
+.CR C
+(see
+.IR environ (5)).
+.SS International Code Set Support
+Single-byte character code sets are supported.
+.SH EXAMPLES
+Generate a full listing of all processes currently running on your machine:
+.IP
+.C "ps \-ef"
+.PP
+To see if a certain process exists on the machine, such as the
+.CR cron
+clock daemon, check the far right column for the command name,
+.CR cron ,
+or try
+.IP
+.C "ps \-f \-C cron"
+.SH WARNINGS
+Things can change while
+.CR ps
+is running; the picture it gives is only a snapshot in time.
+Some data printed for defunct processes is irrelevant.
+.PP
+If two special files for terminals are located at the same select code,
+that terminal may be reported with either name.
+The user can select processes with that terminal using either name.
+.PP
+Users of
+.C ps
+must not rely on the exact field widths and spacing of its output,
+as these will vary depending on the system, the release of HP-UX, and
+the data to be displayed.
+.SH DEPENDENCIES
+.SS HP Process Resource Manager
+The
+.CR \-P
+and
+.CR \-R
+options require the optional
+HP Process Resource Manager (PRM) software
+to be installed and configured.
+See
+.IR prmconfig (1)
+for a description of how to configure HP PRM, and
+.IR prmconf (4)
+for the definition of "process resource group."
+.PP
+If HP PRM is not installed and configured and
+.CR \-P
+or
+.CR \-R
+is specified, a warning message is displayed and (for
+.CR \-P )
+hyphens (-) are displayed in the
+.CR prmid
+and
+.CR prmgrp
+columns.
+.SH FILES
+.PD 0
+.TP 35
+.CR /dev
+Directory of terminal device files
+.TP
+.CR /etc/passwd
+User ID information
+.TP
+.CR /var/adm/ps_data
+Internal data structure
+.PD
+.SH SEE ALSO
+kill(1),
+nice(1),
+acctcom(1M),
+exec(2),
+exit(2),
+fork(2),
+sysconf(2),
+unistd(5).
+.PP
+HP Process Resource Manager:
+prmconfig(1),
+prmconf(4)
+in
+.CT "HP Process Resource Manager User's Guide" .
+.SH STANDARDS COMPLIANCE
+.CR ps ": SVID2, XPG2, XPG3, XPG4"
+.\"
+.\" index@\f4ps\f1 \- report process status@@@\f3ps(1)\f1
+.\" index@\f1report process status@@@\f3ps(1)\f1
+.\" index@\f1process status, report@@@\f3ps(1)\f1
+.\" index@\f1status, report process@@@\f3ps(1)\f1
+.\" index@\f1list current processes@@@\f3ps(1)\f1
+.\" index@\f1current processes, list@@@\f3ps(1)\f1
+.\" index@\f1PRM@@@\f2see \f1Process Resource Manager
+.\" index@\f1Process Resource Manager@@@\f3ps(1)\f1
+.\"
+.\" toc@\f3ps(1)\f1:\0\0\f4ps\f1@@@report process status

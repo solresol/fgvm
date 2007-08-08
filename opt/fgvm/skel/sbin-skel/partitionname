@@ -1,0 +1,3 @@
+#!/sbin/sh
+
+/sbin/cat /etc/partitionname

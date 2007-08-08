@@ -1,0 +1,43 @@
+.TA p
+.TH propogate 1m
+.ds )H Aptec ( www.aptec.net.au )
+.ds ]W FGVM for HP-UX 11.0
+.SH NAME
+propogate \- update partitions from the toplevel
+.SH SYNOPSIS
+.CR propogate
+.IR [ directory | file ]
+.RC ...
+.SH DESCRIPTION
+.CR propogate
+copies the files given as arguments into all partitions.  For example,
+when you make a change to the toplevel /etc/hosts, you might find it
+faster to run 
+.C "propogate /etc/hosts"
+rather than edit each individual environment.
+.PP
+Directories get copied recursively.
+.PP
+.SH DEPENDENCIES
+/usr/contrib/bin/perl must be a Perl4-compatible interpreter.
+.PP
+.SH BUGS
+Weird things happen if not all partitions are up.
+.SH FILES
+.PD 0
+.TP 35
+.CR /etc/opt/fgvm/environ.pl
+locations of partition roots
+.TP
+.CR /etc/opt/fgvm/partition.list
+list of all known partitions
+.PP
+.SH SEE ALSO
+pcp(1m),
+swpropogate(1m),
+pu(1m),
+pshow(1m),
+pls(1m).
+.PP
+.SH STANDARDS COMPLIANCE
+None whatsoever
